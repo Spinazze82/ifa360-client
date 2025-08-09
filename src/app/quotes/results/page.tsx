@@ -1,15 +1,14 @@
 "use client";
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
-export default function Page({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
-  const name = (searchParams.name as string) || "";
-  const ageStr = (searchParams.age as string) || "";
-  const smoker = (searchParams.smoker as string) || "no";
-  const coverStr = (searchParams.cover as string) || "";
+export default function Page() {
+  const sp = useSearchParams();
+
+  const name = sp.get("name") ?? "";
+  const ageStr = sp.get("age") ?? "";
+  const smoker = sp.get("smoker") ?? "no";
+  const coverStr = sp.get("cover") ?? "";
 
   const age = Number(ageStr);
   const cover = Number(coverStr);
@@ -29,7 +28,7 @@ export default function Page({
   const [clientPhone, setClientPhone] = useState("");
 
   const mailtoHref = useMemo(() => {
-    const to = "leads@yourdomain.co.za"; // <-- change this later to your email
+    const to = "leads@yourdomain.co.za"; // <-- change this later
     const subject = encodeURIComponent("New IFA360 Lead: Quote request");
     const body = encodeURIComponent(
       [
