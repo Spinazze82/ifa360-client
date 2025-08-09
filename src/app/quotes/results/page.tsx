@@ -21,22 +21,20 @@ function ResultsInner() {
   const age = Number(ageStr);
   const cover = Number(coverStr);
 
-  // Simple demo estimate (placeholder — not real pricing)
   const estimate = useMemo(() => {
     if (Number.isNaN(age) || Number.isNaN(cover) || cover <= 0 || age < 18) return null;
     const units = cover / 100_000;
-    const basePerUnit = 45; // demo only
+    const basePerUnit = 45;
     const ageFactor = 1 + Math.max(0, age - 30) * 0.02;
     const smokerFactor = smoker === "yes" ? 1.6 : 1.0;
     return Math.round(units * basePerUnit * ageFactor * smokerFactor);
   }, [age, cover, smoker]);
 
-  // Lead capture (no backend yet): mailto handoff
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
 
   const mailtoHref = useMemo(() => {
-    const to = "leads@yalexzis.spinazze@attooh.co.za"; // <-- change this later
+    const to = "alexzis.spinazze@attooh.co.za";
     const subject = encodeURIComponent("New IFA360 Lead: Quote request");
     const body = encodeURIComponent(
       [
@@ -79,7 +77,6 @@ function ResultsInner() {
         )}
       </div>
 
-      {/* Lead Capture */}
       <section className="mt-8 rounded border p-4 bg-white">
         <h2 className="text-2xl font-semibold">Talk to an adviser</h2>
         <p className="mt-1 text-gray-600">

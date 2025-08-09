@@ -7,7 +7,7 @@ export default function ContactPage() {
   const [message, setMessage] = useState("");
 
   const mailtoHref = useMemo(() => {
-    const to = "alexzis.spinazze@attooh.co.za"; // <-- change to your real inbox
+    const to = "alexzis.spinazze@attooh.co.za";
     const subject = encodeURIComponent("IFA360 Customer Contact");
     const body = encodeURIComponent(
       [
@@ -73,4 +73,3 @@ export default function ContactPage() {
     </main>
   );
 }
-
