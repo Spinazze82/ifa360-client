@@ -36,7 +36,7 @@ function ResultsInner() {
   const [clientPhone, setClientPhone] = useState("");
 
   const mailtoHref = useMemo(() => {
-    const to = "leads@yourdomain.co.za"; // <-- change this later
+    const to = "leads@yalexzis.spinazze@attooh.co.za"; // <-- change this later
     const subject = encodeURIComponent("New IFA360 Lead: Quote request");
     const body = encodeURIComponent(
       [
