@@ -1,6 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Link from "next/link";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,13 +22,15 @@ export default function RootLayout({
         <nav className="bg-blue-600 text-white">
           <div className="mx-auto max-w-6xl px-4">
             <div className="flex h-14 items-center justify-between">
-              <a href="/" className="font-semibold tracking-wide">IFA360</a>
+              <Link href="/" className="font-semibold tracking-wide">
+                IFA360
+              </Link>
               <ul className="flex items-center gap-6 text-sm">
-                <li><a href="/" className="hover:underline">Home</a></li>
-                <li><a href="/quotes" className="hover:underline">Get Quotes</a></li>
-                <li><a href="/budget" className="hover:underline">Budget Tools</a></li>
-                <li><a href="/education" className="hover:underline">Education</a></li>
-                <li><a href="/contact" className="hover:underline">Contact</a></li>
+                <li><Link href="/" className="hover:underline">Home</Link></li>
+                <li><Link href="/quotes" className="hover:underline">Get Quotes</Link></li>
+                <li><Link href="/budget" className="hover:underline">Budget Tools</Link></li>
+                <li><Link href="/education" className="hover:underline">Education</Link></li>
+                <li><Link href="/contact" className="hover:underline">Contact</Link></li>
               </ul>
             </div>
           </div>
@@ -44,10 +47,9 @@ export default function RootLayout({
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p>© {new Date().getFullYear()} IFA360. All rights reserved.</p>
               <div className="flex gap-4">
-                <a href="/education" className="hover:underline">Education</a>
-                <a href="/contact" className="hover:underline">Contact</a>
-                <a href="/privacy" className="hover:underline">Privacy</a>
-
+                <Link href="/education" className="hover:underline">Education</Link>
+                <Link href="/contact" className="hover:underline">Contact</Link>
+                <Link href="/privacy" className="hover:underline">Privacy</Link>
               </div>
             </div>
             <p className="mt-3 text-xs">
