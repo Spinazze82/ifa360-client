@@ -1,34 +1,47 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 export default function ContactPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "ok" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const mailtoHref = useMemo(() => {
-    const to = "alexzis.spinazze@attooh.co.za";
-    const subject = encodeURIComponent("IFA360 Customer Contact");
-    const body = encodeURIComponent(
-      [
-        "New message from the customer site:",
-        `Name: ${name || "-"}`,
-        `Email: ${email || "-"}`,
-        "",
-        message || "-",
-        "",
-        "— Sent from IFA360 Customer Site",
-      ].join("\n")
-    );
-    return `mailto:${to}?subject=${subject}&body=${body}`;
-  }, [name, email, message]);
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus("sending");
+    setErrorMsg("");
+
+    try {
+      const res = await fetch("https://formspree.io/f/myzplegy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ name, email, message, form: "contact" }),
+      });
+
+      if (res.ok) {
+        setStatus("ok");
+        setName("");
+        setEmail("");
+        setMessage("");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setErrorMsg(data?.error || "Something went wrong. Please try again.");
+        setStatus("error");
+      }
+    } catch (err) {
+      setErrorMsg("Network error. Please try again.");
+      setStatus("error");
+    }
+  }
 
   return (
     <main className="p-8 max-w-xl mx-auto">
       <h1 className="text-3xl font-bold">Contact</h1>
       <p className="mt-2 text-gray-600">Have a question? Send us a message.</p>
 
-      <form className="mt-6 space-y-4" onSubmit={(e) => e.preventDefault()}>
+      <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         <div>
           <label className="block text-sm font-medium">Your name</label>
           <input
@@ -36,6 +49,7 @@ export default function ContactPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Your full name"
+            required
           />
         </div>
 
@@ -47,6 +61,7 @@ export default function ContactPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
+            required
           />
         </div>
 
@@ -57,18 +72,24 @@ export default function ContactPage() {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="How can we help?"
+            required
           />
         </div>
 
-        <a
-          href={mailtoHref}
-          className="inline-block rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
+        <button
+          type="submit"
+          disabled={status === "sending"}
+          className="rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-60"
         >
-          Send message
-        </a>
-        <p className="mt-2 text-xs text-gray-500">
-          Clicking opens your email app with the message pre-filled.
-        </p>
+          {status === "sending" ? "Sending..." : "Send message"}
+        </button>
+
+        {status === "ok" && (
+          <p className="text-sm text-green-700 mt-2">Thanks! We’ll be in touch shortly.</p>
+        )}
+        {status === "error" && (
+          <p className="text-sm text-red-700 mt-2">{errorMsg}</p>
+        )}
       </form>
     </main>
   );
