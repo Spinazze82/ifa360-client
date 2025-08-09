@@ -21,6 +21,7 @@ function ResultsInner() {
   const age = Number(ageStr);
   const cover = Number(coverStr);
 
+  // Demo estimate (placeholder — not real pricing)
   const estimate = useMemo(() => {
     if (Number.isNaN(age) || Number.isNaN(cover) || cover <= 0 || age < 18) return null;
     const units = cover / 100_000;
@@ -30,28 +31,48 @@ function ResultsInner() {
     return Math.round(units * basePerUnit * ageFactor * smokerFactor);
   }, [age, cover, smoker]);
 
+  // Lead capture (posts to Formspree)
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "ok" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const mailtoHref = useMemo(() => {
-    const to = "alexzis.spinazze@attooh.co.za";
-    const subject = encodeURIComponent("New IFA360 Lead: Quote request");
-    const body = encodeURIComponent(
-      [
-        "New client lead details:",
-        `Name: ${name || "-"}`,
-        `Email: ${clientEmail || "-"}`,
-        `Phone: ${clientPhone || "-"}`,
-        `Age: ${ageStr || "-"}`,
-        `Smoker: ${smoker}`,
-        `Cover: ${coverStr ? "R" + coverStr : "-"}`,
-        `Estimated premium (demo): ${estimate !== null ? "R" + estimate : "-"}`,
-        "",
-        "— Sent from IFA360 Customer Site",
-      ].join("\n")
-    );
-    return `mailto:${to}?subject=${subject}&body=${body}`;
-  }, [name, clientEmail, clientPhone, ageStr, smoker, coverStr, estimate]);
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus("sending");
+    setErrorMsg("");
+
+    try {
+      const res = await fetch("https://formspree.io/f/myzplegy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          form: "lead",
+          name,
+          age: ageStr,
+          smoker,
+          cover: coverStr,
+          estimatedPremium: estimate !== null ? `R${estimate}` : "-",
+          clientEmail,
+          clientPhone,
+          source: "ifa360-customer-site",
+        }),
+      });
+
+      if (res.ok) {
+        setStatus("ok");
+        setClientEmail("");
+        setClientPhone("");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setErrorMsg(data?.error || "Something went wrong. Please try again.");
+        setStatus("error");
+      }
+    } catch {
+      setErrorMsg("Network error. Please try again.");
+      setStatus("error");
+    }
+  }
 
   return (
     <main className="p-8 max-w-2xl mx-auto">
@@ -77,13 +98,14 @@ function ResultsInner() {
         )}
       </div>
 
+      {/* Lead Capture */}
       <section className="mt-8 rounded border p-4 bg-white">
         <h2 className="text-2xl font-semibold">Talk to an adviser</h2>
         <p className="mt-1 text-gray-600">
           Share your contact details and we’ll get an authorised adviser to contact you.
         </p>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <form onSubmit={handleSubmit} className="mt-4 grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-1">
             <label className="block text-sm font-medium">Your email</label>
             <input
@@ -92,6 +114,7 @@ function ResultsInner() {
               value={clientEmail}
               onChange={(e) => setClientEmail(e.target.value)}
               placeholder="you@example.com"
+              required
             />
           </div>
           <div className="sm:col-span-1">
@@ -102,21 +125,28 @@ function ResultsInner() {
               value={clientPhone}
               onChange={(e) => setClientPhone(e.target.value)}
               placeholder="e.g. 082 123 4567"
+              required
             />
           </div>
-        </div>
 
-        <div className="mt-4">
-          <a
-            href={mailtoHref}
-            className="inline-block rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
-          >
-            Send my details to an adviser
-          </a>
-          <p className="mt-2 text-xs text-gray-500">
-            Clicking will open your email app with the details pre-filled. You can review and send.
-          </p>
-        </div>
+          <div className="sm:col-span-2">
+            <button
+              type="submit"
+              disabled={status === "sending"}
+              className="rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {status === "sending" ? "Sending..." : "Send my details to an adviser"}
+            </button>
+            {status === "ok" && (
+              <p className="text-sm text-green-700 mt-2">
+                Thanks! An adviser will contact you shortly.
+              </p>
+            )}
+            {status === "error" && (
+              <p className="text-sm text-red-700 mt-2">{errorMsg}</p>
+            )}
+          </div>
+        </form>
       </section>
     </main>
   );
