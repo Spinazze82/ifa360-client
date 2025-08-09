@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-gray-50">
@@ -11,18 +13,18 @@ export default function Home() {
             Compare estimates, use budget & projection tools, and get clear explanations with AI help.
           </p>
           <div className="mt-6 flex gap-3">
-            <a
+            <Link
               href="/quotes"
               className="rounded bg-blue-600 px-5 py-3 font-medium text-white hover:bg-blue-700"
             >
               Get my quotes
-            </a>
-            <a
+            </Link>
+            <Link
               href="/education"
               className="rounded border border-gray-300 px-5 py-3 font-medium text-gray-800 hover:bg-gray-100"
             >
               Learn the basics
-            </a>
+            </Link>
           </div>
         </div>
       </section>
