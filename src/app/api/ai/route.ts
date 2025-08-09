@@ -1,14 +1,15 @@
+// File: src/app/api/ai/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
-// POST /api/ai  { question: string }
+// POST /api/ai   { question: string }
 export async function POST(req: NextRequest) {
   try {
     const { question } = await req.json();
+
     if (!question || typeof question !== "string") {
       return NextResponse.json({ error: "Missing question" }, { status: 400 });
     }
 
-    // IMPORTANT: we'll set this in the NEXT step
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
@@ -17,7 +18,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Call an OpenAI-compatible chat endpoint
     const resp = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -26,22 +26,41 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
+        temperature: 0.4, // a bit more variety
+        max_tokens: 350,
         messages: [
           {
             role: "system",
-            content:
-              "You are a friendly financial education assistant for South African consumers. Keep answers short, plain-English, and general. Do NOT give regulated financial advice. Add: 'This is general info, not financial advice.' at the end.",
+            content: [
+              "You are a friendly financial EDUCATION assistant for South African consumers.",
+              "ALWAYS answer in concise plain-English, ideally 4–7 bullet points.",
+              "If the question is vague, first ask ONE clarifying question.",
+              "If the user requests regulated/personalised advice, give general guidance only and suggest speaking to a licensed adviser.",
+              "Use South African context (POPIA, TFSA, Rands).",
+              "Use Rands (R) for any amounts.",
+              "End every answer with: 'This is general info, not financial advice.'",
+            ].join(" "),
           },
-          { role: "user", content: question },
+          {
+            role: "user",
+            content: [
+              "Question:",
+              question,
+              "",
+              "Context:",
+              "- Country: South Africa.",
+              "- Common products: life cover, disability, income protection, gap cover, funeral cover, TFSA, RA, unit trusts.",
+              "- Keep it short, clear, and practical.",
+            ].join("\n"),
+          },
         ],
-        temperature: 0.2,
       }),
     });
 
     if (!resp.ok) {
       const text = await resp.text();
       return NextResponse.json(
-        { error: `Upstream error: ${text.slice(0, 200)}` },
+        { error: `Upstream error: ${text.slice(0, 300)}` },
         { status: 500 }
       );
     }
@@ -49,7 +68,7 @@ export async function POST(req: NextRequest) {
     const data = await resp.json();
     const answer =
       data?.choices?.[0]?.message?.content ??
-      "Sorry, I couldn’t generate a response.";
+      "Sorry, I couldn’t generate a response. Please try again.";
 
     return NextResponse.json({ answer });
   } catch (err) {
