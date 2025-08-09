@@ -1,8 +1,16 @@
 "use client";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 export default function Page() {
+  return (
+    <Suspense fallback={<main className="p-8">Loading…</main>}>
+      <ResultsInner />
+    </Suspense>
+  );
+}
+
+function ResultsInner() {
   const sp = useSearchParams();
 
   const name = sp.get("name") ?? "";
