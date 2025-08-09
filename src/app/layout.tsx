@@ -1,63 +1,48 @@
 import "./globals.css";
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
-const inter = Inter({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "IFA360 — Customer Portal",
-  description: "Customer-facing portal for insurance quotes, tools, and education",
+export const metadata = {
+  title: "IFA360",
+  description: "Customer portal with quotes, tools, and education",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-gray-50 text-gray-900`}>
-        {/* Top Navigation */}
-        <nav className="bg-blue-600 text-white">
-          <div className="mx-auto max-w-6xl px-4">
-            <div className="flex h-14 items-center justify-between">
-              <Link href="/" className="font-semibold tracking-wide">
-                IFA360
+      <body className="min-h-screen flex flex-col">
+        {/* Header */}
+        <header className="bg-blue-600 text-white shadow-md">
+          <div className="container mx-auto flex items-center justify-between p-4">
+            <Link href="/" className="text-lg font-bold">
+              IFA360
+            </Link>
+            <nav className="flex gap-4">
+              <Link href="/" className="hover:underline">
+                Home
               </Link>
-              <ul className="flex items-center gap-6 text-sm">
-                <li><Link href="/" className="hover:underline">Home</Link></li>
-                <li><Link href="/quotes" className="hover:underline">Get Quotes</Link></li>
-                <li><Link href="/budget" className="hover:underline">Budget Tools</Link></li>
-                <li><Link href="/education" className="hover:underline">Education</Link></li>
-                <li><Link href="/contact" className="hover:underline">Contact</Link></li>
-              </ul>
-            </div>
+              <Link href="/quotes" className="hover:underline">
+                Quotes
+              </Link>
+              <Link href="/budget" className="hover:underline">
+                Budget Tools
+              </Link>
+              <Link href="/education" className="hover:underline">
+                Education
+              </Link>
+              <Link href="/contact" className="hover:underline">
+                Contact
+              </Link>
+              <Link href="/privacy" className="hover:underline">
+                Privacy
+              </Link>
+            </nav>
           </div>
-        </nav>
+        </header>
 
-        {/* Page Content */}
-        <main className="min-h-[70vh]">
-          {children}
-        </main>
+        {/* Main content */}
+        <main className="flex-1 container mx-auto p-4">{children}</main>
 
         {/* Footer */}
-        <footer className="mt-10 border-t bg-white">
-          <div className="mx-auto max-w-6xl px-4 py-8 text-sm text-gray-600">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p>© {new Date().getFullYear()} IFA360. All rights reserved.</p>
-              <div className="flex gap-4">
-                <Link href="/education" className="hover:underline">Education</Link>
-                <Link href="/contact" className="hover:underline">Contact</Link>
-                <Link href="/privacy" className="hover:underline">Privacy</Link>
-              </div>
-            </div>
-            <p className="mt-3 text-xs">
-              Demo site — estimates are illustrative only and not financial advice.
-            </p>
-          </div>
-        </footer>
-      </body>
-    </html>
-  );
-}
+        <footer className="bg-gray-100 border-t p-4 text-center text-sm">
+          © {new Date().getFullY
