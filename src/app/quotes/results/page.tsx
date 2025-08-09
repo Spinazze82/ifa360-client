@@ -10,28 +10,85 @@ export default function Page() {
   );
 }
 
+function formatR(n: number | null | undefined) {
+  if (n == null || isNaN(n)) return "—";
+  return "R" + Math.round(n).toLocaleString();
+}
+
 function ResultsInner() {
   const sp = useSearchParams();
 
+  // Personal
   const name = sp.get("name") ?? "";
-  const ageStr = sp.get("age") ?? "";
+  const id = sp.get("id") ?? "";
+  const occupation = sp.get("occupation") ?? "";
+  const education = sp.get("education") ?? "";
+  const salaryStr = sp.get("salary") ?? "";
   const smoker = sp.get("smoker") ?? "no";
-  const coverStr = sp.get("cover") ?? "";
 
-  const age = Number(ageStr);
-  const cover = Number(coverStr);
+  // Cover selections
+  const lifeStr = sp.get("life") ?? "";
+  const siType = (sp.get("siType") ?? "accelerated") as "accelerated" | "non-accelerated";
+  const siCoverStr = sp.get("siCover") ?? "";
+  const disType = (sp.get("disType") ?? "accelerated") as "accelerated" | "non-accelerated";
+  const disCoverStr = sp.get("disCover") ?? "";
+  const ipMonthlyStr = sp.get("ipMonthly") ?? "";
 
-  // Demo estimate (placeholder — not real pricing)
-  const estimate = useMemo(() => {
-    if (Number.isNaN(age) || Number.isNaN(cover) || cover <= 0 || age < 18) return null;
-    const units = cover / 100_000;
-    const basePerUnit = 45;
-    const ageFactor = 1 + Math.max(0, age - 30) * 0.02;
-    const smokerFactor = smoker === "yes" ? 1.6 : 1.0;
-    return Math.round(units * basePerUnit * ageFactor * smokerFactor);
-  }, [age, cover, smoker]);
+  // Numbers
+  const salary = Number(salaryStr);
+  const life = Number(lifeStr);
+  const siCover = Number(siCoverStr);
+  const disCover = Number(disCoverStr);
+  const ipMonthly = Number(ipMonthlyStr);
 
-  // Lead capture (posts to Formspree)
+  // --- Demo premium model (placeholder) ---
+  const totals = useMemo(() => {
+    // Life cover (per R100k)
+    let lifePrem = 0;
+    if (life > 0) {
+      const units = life / 100_000;
+      const basePerUnit = 45; // demo only
+      const smokerFactor = smoker === "yes" ? 1.6 : 1.0;
+      lifePrem = units * basePerUnit * smokerFactor;
+    }
+
+    // Severe illness: base per R100k + type factor
+    let siPrem = 0;
+    if (siCover > 0) {
+      const units = siCover / 100_000;
+      const basePerUnit = 65; // demo only
+      const typeFactor = siType === "accelerated" ? 0.85 : 1.0; // accelerated cheaper (uses life pool)
+      siPrem = units * basePerUnit * typeFactor;
+    }
+
+    // Disability lump sum: per R100k + type factor
+    let disPrem = 0;
+    if (disCover > 0) {
+      const units = disCover / 100_000;
+      const basePerUnit = 55; // demo only
+      const typeFactor = disType === "accelerated" ? 0.9 : 1.0;
+      disPrem = units * basePerUnit * typeFactor;
+    }
+
+    // Income protection (monthly benefit): per R1000 benefit
+    let ipPrem = 0;
+    if (ipMonthly > 0) {
+      const units = ipMonthly / 1_000;
+      const basePerUnit = 22; // demo only
+      ipPrem = units * basePerUnit;
+    }
+
+    const total = Math.round(lifePrem + siPrem + disPrem + ipPrem);
+    return {
+      lifePrem: Math.round(lifePrem),
+      siPrem: Math.round(siPrem),
+      disPrem: Math.round(disPrem),
+      ipPrem: Math.round(ipPrem),
+      total,
+    };
+  }, [life, siCover, disCover, ipMonthly, smoker, siType, disType]);
+
+  // Lead capture (Formspree)
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "ok" | "error">("idle");
@@ -48,11 +105,27 @@ function ResultsInner() {
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
           form: "lead",
+          // personal
           name,
-          age: ageStr,
+          id,
+          occupation,
+          education,
+          salary: salaryStr,
           smoker,
-          cover: coverStr,
-          estimatedPremium: estimate !== null ? `R${estimate}` : "-",
+          // covers
+          life: lifeStr,
+          severeIllnessType: siType,
+          severeIllnessCover: siCoverStr,
+          disabilityType: disType,
+          disabilityCover: disCoverStr,
+          incomeProtectionMonthly: ipMonthlyStr,
+          // premiums (demo)
+          premium_life: formatR(totals.lifePrem),
+          premium_severeIllness: formatR(totals.siPrem),
+          premium_disability: formatR(totals.disPrem),
+          premium_incomeProtection: formatR(totals.ipPrem),
+          premium_total: formatR(totals.total),
+          // contact
           clientEmail,
           clientPhone,
           source: "ifa360-customer-site",
@@ -75,35 +148,69 @@ function ResultsInner() {
   }
 
   return (
-    <main className="p-8 max-w-2xl mx-auto">
+    <main className="p-8 max-w-3xl mx-auto">
       <h1 className="text-3xl font-bold">Your Quote Preview</h1>
       <p className="mt-2 text-gray-600">
-        This is a demo estimate to help you compare options. Not financial advice.
+        Demo estimates only. Final pricing depends on underwriting and insurer rules.
       </p>
 
-      <div className="mt-6 space-y-2 rounded border p-4 bg-white">
-        <div><span className="font-medium">Name:</span> {name || "—"}</div>
-        <div><span className="font-medium">Age:</span> {ageStr || "—"}</div>
-        <div><span className="font-medium">Smoker:</span> {smoker}</div>
-        <div><span className="font-medium">Cover:</span> {coverStr ? `R${coverStr}` : "—"}</div>
-      </div>
+      {/* Summary of inputs */}
+      <section className="mt-6 rounded border bg-white p-4">
+        <h2 className="text-xl font-semibold">Your details</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div><span className="font-medium">Name:</span> {name || "—"}</div>
+          <div><span className="font-medium">ID:</span> {id || "—"}</div>
+          <div><span className="font-medium">Occupation:</span> {occupation || "—"}</div>
+          <div><span className="font-medium">Education:</span> {education || "—"}</div>
+          <div><span className="font-medium">Gross salary:</span> {salaryStr ? formatR(salary) : "—"}</div>
+          <div><span className="font-medium">Smoker:</span> {smoker}</div>
+        </div>
+      </section>
 
-      <div className="mt-6 rounded border p-4 bg-white">
-        {estimate !== null ? (
-          <p className="text-xl">
-            <span className="font-semibold">Estimated monthly premium:</span> R{estimate}
-          </p>
-        ) : (
-          <p>Please provide name, age, smoker status, and cover amount.</p>
-        )}
-      </div>
+      {/* Covers selected */}
+      <section className="mt-6 rounded border bg-white p-4">
+        <h2 className="text-xl font-semibold">Cover selections</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div><span className="font-medium">Life cover:</span> {lifeStr ? formatR(life) : "—"}</div>
+          <div><span className="font-medium">Severe illness:</span> {siCoverStr ? `${formatR(siCover)} (${siType})` : "—"}</div>
+          <div><span className="font-medium">Disability:</span> {disCoverStr ? `${formatR(disCover)} (${disType})` : "—"}</div>
+          <div><span className="font-medium">Income protection (monthly):</span> {ipMonthlyStr ? formatR(ipMonthly) : "—"}</div>
+        </div>
+      </section>
 
-      {/* Lead Capture */}
-      <section className="mt-8 rounded border p-4 bg-white">
-        <h2 className="text-2xl font-semibold">Talk to an adviser</h2>
-        <p className="mt-1 text-gray-600">
-          Share your contact details and we’ll get an authorised adviser to contact you.
+      {/* Premium estimate */}
+      <section className="mt-6 rounded border bg-white p-4">
+        <h2 className="text-xl font-semibold">Estimated monthly premium (demo)</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="rounded bg-gray-50 p-3">
+            <div className="text-sm text-gray-600">Life</div>
+            <div className="text-2xl font-bold">{formatR(totals.lifePrem)}</div>
+          </div>
+          <div className="rounded bg-gray-50 p-3">
+            <div className="text-sm text-gray-600">Severe illness</div>
+            <div className="text-2xl font-bold">{formatR(totals.siPrem)}</div>
+          </div>
+          <div className="rounded bg-gray-50 p-3">
+            <div className="text-sm text-gray-600">Disability</div>
+            <div className="text-2xl font-bold">{formatR(totals.disPrem)}</div>
+          </div>
+          <div className="rounded bg-gray-50 p-3">
+            <div className="text-sm text-gray-600">Income protection</div>
+            <div className="text-2xl font-bold">{formatR(totals.ipPrem)}</div>
+          </div>
+        </div>
+        <div className="mt-4 text-xl">
+          <span className="font-semibold">Total estimate:</span> {formatR(totals.total)}
+        </div>
+        <p className="mt-2 text-xs text-gray-500">
+          Illustrative only; not financial advice.
         </p>
+      </section>
+
+      {/* Lead capture */}
+      <section className="mt-8 rounded border bg-white p-4">
+        <h2 className="text-2xl font-semibold">Talk to an adviser</h2>
+        <p className="mt-1 text-gray-600">Share your contact details and we’ll get an authorised adviser to contact you.</p>
 
         <form onSubmit={handleSubmit} className="mt-4 grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-1">
