@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from "react";
 
-/** Tiny inline chart (no libraries) */
+/** Tiny inline SVG line chart (no libraries) */
 function LineChart({
   data,
-  height = 240,
+  height = 260,
   className = "",
 }: {
   data: { x: number; y: number }[];
@@ -14,16 +14,15 @@ function LineChart({
 }) {
   if (!data.length) return null;
 
-  // padding around the plot area
   const pad = 28;
-  const w = 800; // logical width (svg scales to fit container)
+  const w = 800;
   const h = height;
 
   const xs = data.map((d) => d.x);
   const ys = data.map((d) => d.y);
   const minX = Math.min(...xs);
   const maxX = Math.max(...xs);
-  const minY = 0; // start at zero for finance charts
+  const minY = 0;
   const maxY = Math.max(...ys);
 
   const xScale = (x: number) =>
@@ -35,12 +34,9 @@ function LineChart({
     .map((d, i) => `${i ? "L" : "M"} ${xScale(d.x).toFixed(2)} ${yScale(d.y).toFixed(2)}`)
     .join(" ");
 
-  // simple y-axis ticks: 0%, 50%, 100% of max
   const ticks = [0, 0.5, 1].map((t) => ({
     y: minY + (maxY - minY) * t,
-    label:
-      "R" +
-      Math.round((minY + (maxY - minY) * t)).toLocaleString(),
+    label: "R" + Math.round(minY + (maxY - minY) * t).toLocaleString(),
   }));
 
   return (
@@ -50,12 +46,12 @@ function LineChart({
         <line x1={pad} y1={h - pad} x2={w - pad} y2={h - pad} stroke="currentColor" strokeWidth="1" opacity={0.3} />
         <line x1={pad} y1={pad} x2={pad} y2={h - pad} stroke="currentColor" strokeWidth="1" opacity={0.3} />
 
-        {/* y ticks */}
+        {/* y-grid + labels */}
         {ticks.map((t, i) => {
           const y = yScale(t.y);
           return (
             <g key={i}>
-              <line x1={pad} y1={y} x2={w - pad} y2={y} stroke="currentColor" strokeWidth="1" opacity={0.1} />
+              <line x1={pad} y1={y} x2={w - pad} y2={y} stroke="currentColor" strokeWidth="1" opacity={0.08} />
               <text x={pad - 8} y={y} textAnchor="end" dominantBaseline="middle" fontSize="10" fill="currentColor" opacity={0.6}>
                 {t.label}
               </text>
@@ -66,17 +62,15 @@ function LineChart({
         {/* line */}
         <path d={path} fill="none" stroke="currentColor" strokeWidth="2" />
 
-        {/* last point dot */}
-        {data.length > 0 && (
-          <circle
-            cx={xScale(data[data.length - 1].x)}
-            cy={yScale(data[data.length - 1].y)}
-            r="3.5"
-            fill="currentColor"
-          />
-        )}
+        {/* last point */}
+        <circle
+          cx={xScale(data[data.length - 1].x)}
+          cy={yScale(data[data.length - 1].y)}
+          r="3.5"
+          fill="currentColor"
+        />
 
-        {/* x labels: first & last year */}
+        {/* x labels */}
         <text x={pad} y={h - pad + 16} fontSize="10" fill="currentColor" opacity={0.6}>
           Year {data[0].x}
         </text>
@@ -88,105 +82,215 @@ function LineChart({
   );
 }
 
-export default function Page() {
-  const [income, setIncome] = useState<number | "">("");
-  const [expenses, setExpenses] = useState<number | "">("");
-  const [growthRate, setGrowthRate] = useState<number | "">(6);
-  const [years, setYears] = useState<number | "">(10);
+function formatR(n: number) {
+  return "R " + Math.round(n).toLocaleString();
+}
 
-  const surplus = income !== "" && expenses !== "" ? income - expenses : null;
+export default function ProjectionToolPage() {
+  // Inputs
+  const [initial, setInitial] = useState(0);                 // Initial lump sum (R)
+  const [monthly, setMonthly] = useState(2500);              // Monthly contribution (R)
+  const [years, setYears] = useState(10);                    // Years
+  const [growth, setGrowth] = useState(6);                   // Annual growth % (net of fees)
+  const [escalation, setEscalation] = useState(0);           // Annual contribution increase %
 
-  // simple projection (demo): compound each year's total contributions at rate
-  const projection = useMemo(() => {
-    if (surplus === null || surplus <= 0 || growthRate === "" || years === "") return [];
-    const arr: { year: number; value: number }[] = [];
-    for (let y = 1; y <= Number(years); y++) {
-      const value = surplus * 12 * y * Math.pow(1 + Number(growthRate) / 100, y);
-      arr.push({ year: y, value });
+  // Calculations — simulate month by month (handles annual escalation nicely)
+  const { series, finalValue, totalContrib } = useMemo(() => {
+    const months = Math.max(1, years) * 12;
+    const rMonthly = growth / 100 / 12;
+    let bal = initial;
+    let mContr = monthly;
+    const pts: { x: number; y: number }[] = [];
+
+    for (let m = 1; m <= months; m++) {
+      // escalate contribution at the start of each year (except first)
+      if (m > 1 && (m - 1) % 12 === 0) {
+        mContr = mContr * (1 + escalation / 100);
+      }
+      bal = (bal + mContr) * (1 + rMonthly);
+      if (m % 12 === 0) {
+        pts.push({ x: m / 12, y: bal });
+      }
     }
-    return arr;
-  }, [surplus, growthRate, years]);
+
+    const totalContribCalc = initial + Array.from({ length: months }).reduce((acc, _, idx) => {
+      // rebuild the same contribution schedule to sum contributions
+      const yearIndex = Math.floor(idx / 12);
+      const contrThisMonth = monthly * Math.pow(1 + escalation / 100, yearIndex);
+      return acc + contrThisMonth;
+    }, 0);
+
+    return { series: pts, finalValue: bal, totalContrib: totalContribCalc };
+  }, [initial, monthly, years, growth, escalation]);
+
+  function resetDefaults() {
+    setInitial(0);
+    setMonthly(2500);
+    setYears(10);
+    setGrowth(6);
+    setEscalation(0);
+  }
 
   return (
     <main className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold">Budget & Projection Tool</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Projection Tool</h1>
+        <button
+          onClick={resetDefaults}
+          className="rounded border px-3 py-1.5 text-sm hover:bg-gray-50"
+        >
+          Reset
+        </button>
+      </div>
       <p className="mt-2 text-gray-600">
-        Calculate your monthly surplus and project potential investment growth over time.
+        Adjust the sliders to see how your savings could grow over time. Demo only — not financial advice.
       </p>
 
-      <div className="mt-8 space-y-6">
+      {/* Controls */}
+      <section className="mt-6 space-y-6 rounded border bg-white p-4">
+        {/* Initial lump sum */}
         <div>
-          <label className="block text-sm font-medium">Monthly income after tax (R)</label>
-          <input
-            type="number"
-            className="mt-1 w-full rounded border p-2"
-            value={income}
-            onChange={(e) => setIncome(e.target.value === "" ? "" : Number(e.target.value))}
-            placeholder="e.g. 25000"
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            Use your net take-home pay after PAYE/UIF/other deductions.
-          </p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium">Monthly expenses (R)</label>
-          <input
-            type="number"
-            className="mt-1 w-full rounded border p-2"
-            value={expenses}
-            onChange={(e) => setExpenses(e.target.value === "" ? "" : Number(e.target.value))}
-            placeholder="e.g. 18000"
-          />
-        </div>
-
-        <div className="grid gap-6 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium">Expected annual growth rate (%)</label>
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-medium">Initial amount (once-off)</label>
             <input
               type="number"
-              className="mt-1 w-full rounded border p-2"
-              value={growthRate}
-              onChange={(e) => setGrowthRate(e.target.value === "" ? "" : Number(e.target.value))}
-              placeholder="e.g. 6"
+              className="w-40 rounded border p-1.5 text-right"
+              value={initial}
+              onChange={(e) => setInitial(Number(e.target.value || 0))}
             />
           </div>
+          <input
+            type="range"
+            min={0}
+            max={2_000_000}
+            step={5_000}
+            value={initial}
+            onChange={(e) => setInitial(Number(e.target.value))}
+            className="mt-2 w-full"
+          />
+          <div className="text-xs text-gray-600 mt-1">{formatR(initial)}</div>
+        </div>
 
-          <div>
+        {/* Monthly contribution */}
+        <div>
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-medium">Monthly contribution</label>
+            <input
+              type="number"
+              className="w-40 rounded border p-1.5 text-right"
+              value={monthly}
+              onChange={(e) => setMonthly(Number(e.target.value || 0))}
+            />
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={100_000}
+            step={500}
+            value={monthly}
+            onChange={(e) => setMonthly(Number(e.target.value))}
+            className="mt-2 w-full"
+          />
+          <div className="text-xs text-gray-600 mt-1">{formatR(monthly)}/mo</div>
+        </div>
+
+        {/* Years */}
+        <div>
+          <div className="flex items-center justify-between">
             <label className="block text-sm font-medium">Projection period (years)</label>
             <input
               type="number"
-              className="mt-1 w-full rounded border p-2"
+              className="w-24 rounded border p-1.5 text-right"
               value={years}
-              onChange={(e) => setYears(e.target.value === "" ? "" : Number(e.target.value))}
-              placeholder="e.g. 10"
+              onChange={(e) => setYears(Math.max(1, Number(e.target.value || 1)))}
             />
           </div>
+          <input
+            type="range"
+            min={1}
+            max={40}
+            step={1}
+            value={years}
+            onChange={(e) => setYears(Number(e.target.value))}
+            className="mt-2 w-full"
+          />
+          <div className="text-xs text-gray-600 mt-1">{years} year(s)</div>
         </div>
-      </div>
 
-      {/* Surplus */}
-      {surplus !== null && (
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold">Monthly Surplus</h2>
-          <p className="mt-1 text-lg">R {surplus.toLocaleString()}</p>
+        {/* Growth */}
+        <div>
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-medium">Expected annual growth</label>
+            <input
+              type="number"
+              className="w-24 rounded border p-1.5 text-right"
+              value={growth}
+              onChange={(e) => setGrowth(Number(e.target.value || 0))}
+            />
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={20}
+            step={0.1}
+            value={growth}
+            onChange={(e) => setGrowth(Number(e.target.value))}
+            className="mt-2 w-full"
+          />
+          <div className="text-xs text-gray-600 mt-1">{growth}% p.a.</div>
         </div>
-      )}
+
+        {/* Escalation */}
+        <div>
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-medium">Contribution escalation (annual)</label>
+            <input
+              type="number"
+              className="w-24 rounded border p-1.5 text-right"
+              value={escalation}
+              onChange={(e) => setEscalation(Number(e.target.value || 0))}
+            />
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={15}
+            step={0.5}
+            value={escalation}
+            onChange={(e) => setEscalation(Number(e.target.value))}
+            className="mt-2 w-full"
+          />
+          <div className="text-xs text-gray-600 mt-1">{escalation}% / year</div>
+        </div>
+      </section>
+
+      {/* Summary cards */}
+      <section className="mt-6 grid gap-4 sm:grid-cols-3">
+        <div className="rounded bg-white p-4 border">
+          <div className="text-sm text-gray-600">Total contributions</div>
+          <div className="text-xl font-semibold">{formatR(totalContrib)}</div>
+        </div>
+        <div className="rounded bg-white p-4 border">
+          <div className="text-sm text-gray-600">Projected value</div>
+          <div className="text-xl font-semibold">{formatR(finalValue)}</div>
+        </div>
+        <div className="rounded bg-white p-4 border">
+          <div className="text-sm text-gray-600">Growth (gain)</div>
+          <div className="text-xl font-semibold">{formatR(finalValue - totalContrib)}</div>
+        </div>
+      </section>
 
       {/* Chart */}
-      {projection.length > 0 && (
-        <div className="mt-8">
+      {series.length > 0 && (
+        <section className="mt-8">
           <h2 className="text-xl font-semibold">Projection chart</h2>
-          <LineChart
-            className="mt-3 text-blue-700"
-            data={projection.map((p) => ({ x: p.year, y: p.value }))}
-          />
-        </div>
+          <LineChart className="mt-3 text-blue-700" data={series} />
+        </section>
       )}
 
       {/* Table */}
-      {projection.length > 0 && (
-        <div className="mt-8">
+      {series.length > 0 && (
+        <section className="mt-8">
           <h2 className="text-xl font-semibold">Projection table</h2>
           <table className="mt-2 w-full border-collapse border">
             <thead>
@@ -196,18 +300,20 @@ export default function Page() {
               </tr>
             </thead>
             <tbody>
-              {projection.map((row) => (
-                <tr key={row.year}>
-                  <td className="border px-4 py-2">{row.year}</td>
-                  <td className="border px-4 py-2">
-                    {row.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                  </td>
+              {series.map((row) => (
+                <tr key={row.x}>
+                  <td className="border px-4 py-2">{row.x}</td>
+                  <td className="border px-4 py-2">{Math.round(row.y).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </section>
       )}
+
+      <p className="mt-4 text-xs text-gray-500">
+        Illustrative only. Assumes monthly contributions compounded monthly and annual escalation applied at the start of each year.
+      </p>
     </main>
   );
 }
