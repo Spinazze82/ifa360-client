@@ -1,6 +1,27 @@
+// File: src/app/quotes/results/page.tsx
 "use client";
+
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+
+type CarrierRow = {
+  key: string;
+  name: string;
+  factor: number;
+  perks?: string;
+};
+
+const CARRIERS: CarrierRow[] = [
+  { key: "discovery", name: "Discovery", factor: 1.0, perks: "Wellness-linked" },
+  { key: "liberty", name: "Liberty", factor: 0.98, perks: "Strong disability options" },
+  { key: "sanlam", name: "Sanlam", factor: 1.03, perks: "Broad cover range" },
+  { key: "hollard", name: "Hollard", factor: 0.97, perks: "Value combos" },
+  { key: "capital-legacy", name: "Capital Legacy", factor: 1.05, perks: "Estate-focused add-ons" },
+  { key: "momentum", name: "Momentum", factor: 1.01, perks: "Partner discounts" },
+  { key: "old-mutual", name: "Old Mutual", factor: 1.02, perks: "Large provider" },
+  { key: "brightrock", name: "BrightRock", factor: 0.99, perks: "Needs-matched structure" },
+  { key: "bidvest-life", name: "Bidvest Life", factor: 1.0, perks: "Income protection specialist" },
+];
 
 export default function Page() {
   return (
@@ -14,13 +35,6 @@ function formatR(n: number | null | undefined) {
   if (n == null || isNaN(n)) return "—";
   return "R" + Math.round(n).toLocaleString();
 }
-
-type CarrierRow = {
-  key: string;
-  name: string;
-  factor: number; // brand-level multiplier (demo)
-  perks?: string;
-};
 
 function ResultsInner() {
   const sp = useSearchParams();
@@ -48,12 +62,12 @@ function ResultsInner() {
   const disCover = Number(disCoverStr);
   const ipMonthly = Number(ipMonthlyStr);
 
-  // --- Base demo premium model ---
+  // Base demo premium model
   const baseTotals = useMemo(() => {
     let lifePrem = 0;
     if (life > 0) {
       const units = life / 100_000;
-      const basePerUnit = 45; // demo only
+      const basePerUnit = 45;
       const smokerFactor = smoker === "yes" ? 1.6 : 1.0;
       lifePrem = units * basePerUnit * smokerFactor;
     }
@@ -61,7 +75,7 @@ function ResultsInner() {
     let siPrem = 0;
     if (siCover > 0) {
       const units = siCover / 100_000;
-      const basePerUnit = 65; // demo only
+      const basePerUnit = 65;
       const typeFactor = siType === "accelerated" ? 0.85 : 1.0;
       siPrem = units * basePerUnit * typeFactor;
     }
@@ -69,7 +83,7 @@ function ResultsInner() {
     let disPrem = 0;
     if (disCover > 0) {
       const units = disCover / 100_000;
-      const basePerUnit = 55; // demo only
+      const basePerUnit = 55;
       const typeFactor = disType === "accelerated" ? 0.9 : 1.0;
       disPrem = units * basePerUnit * typeFactor;
     }
@@ -77,7 +91,7 @@ function ResultsInner() {
     let ipPrem = 0;
     if (ipMonthly > 0) {
       const units = ipMonthly / 1_000;
-      const basePerUnit = 22; // demo only
+      const basePerUnit = 22;
       ipPrem = units * basePerUnit;
     }
 
@@ -91,33 +105,19 @@ function ResultsInner() {
     };
   }, [life, siCover, disCover, ipMonthly, smoker, siType, disType]);
 
-  // --- Mock carrier matrix (demo multipliers, incl. Bidvest Life) ---
-  const carriers: CarrierRow[] = [
-    { key: "discovery", name: "Discovery", factor: 1.0, perks: "Wellness-linked" },
-    { key: "liberty", name: "Liberty", factor: 0.98, perks: "Strong disability options" },
-    { key: "sanlam", name: "Sanlam", factor: 1.03, perks: "Broad cover range" },
-    { key: "hollard", name: "Hollard", factor: 0.97, perks: "Value combos" },
-    { key: "capital-legacy", name: "Capital Legacy", factor: 1.05, perks: "Estate-focused add-ons" },
-    { key: "momentum", name: "Momentum", factor: 1.01, perks: "Partner discounts" },
-    { key: "old-mutual", name: "Old Mutual", factor: 1.02, perks: "Large provider" },
-    { key: "brightrock", name: "BrightRock", factor: 0.99, perks: "Needs-matched structure" },
-    { key: "bidvest-life", name: "Bidvest Life", factor: 1.0, perks: "Income protection specialist" },
-  ];
-
+  // Multi-carrier quotes based on baseTotals (cheapest first)
   const carrierQuotes = useMemo(() => {
-    return carriers
-      .map((c) => {
-        const lifePrem = Math.round(baseTotals.lifePrem * c.factor);
-        const siPrem = Math.round(baseTotals.siPrem * (c.factor + 0.01));
-        const disPrem = Math.round(baseTotals.disPrem * (c.factor - 0.01));
-        const ipPrem = Math.round(baseTotals.ipPrem * c.factor);
-        const total = lifePrem + siPrem + disPrem + ipPrem;
-        return { ...c, lifePrem, siPrem, disPrem, ipPrem, total };
-      })
-      .sort((a, b) => a.total - b.total); // cheapest first
-  }, [carriers, baseTotals]);
+    return CARRIERS.map((c) => {
+      const lifePrem = Math.round(baseTotals.lifePrem * c.factor);
+      const siPrem = Math.round(baseTotals.siPrem * (c.factor + 0.01));
+      const disPrem = Math.round(baseTotals.disPrem * (c.factor - 0.01));
+      const ipPrem = Math.round(baseTotals.ipPrem * c.factor);
+      const total = lifePrem + siPrem + disPrem + ipPrem;
+      return { ...c, lifePrem, siPrem, disPrem, ipPrem, total };
+    }).sort((a, b) => a.total - b.total);
+  }, [baseTotals]);
 
-  // Lead capture (Formspree)
+  // Lead capture
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "ok" | "error">("idle");
@@ -256,7 +256,7 @@ function ResultsInner() {
         </div>
       </section>
 
-      {/* Multi-carrier quotes (demo) */}
+      {/* Multi-carrier quotes */}
       <section className="mt-6 rounded border bg-white p-4">
         <h2 className="text-xl font-semibold">Carrier quotes (demo)</h2>
         <p className="mt-1 text-sm text-gray-600">

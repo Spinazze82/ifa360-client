@@ -1,3 +1,4 @@
+// File: src/app/projection/page.tsx
 "use client";
 
 import { useMemo, useState } from "react";
@@ -42,11 +43,8 @@ function LineChart({
   return (
     <div className={`w-full overflow-hidden ${className}`}>
       <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-auto">
-        {/* axes */}
         <line x1={pad} y1={h - pad} x2={w - pad} y2={h - pad} stroke="currentColor" strokeWidth="1" opacity={0.3} />
         <line x1={pad} y1={pad} x2={pad} y2={h - pad} stroke="currentColor" strokeWidth="1" opacity={0.3} />
-
-        {/* y-grid + labels */}
         {ticks.map((t, i) => {
           const y = yScale(t.y);
           return (
@@ -58,19 +56,8 @@ function LineChart({
             </g>
           );
         })}
-
-        {/* line */}
         <path d={path} fill="none" stroke="currentColor" strokeWidth="2" />
-
-        {/* last point */}
-        <circle
-          cx={xScale(data[data.length - 1].x)}
-          cy={yScale(data[data.length - 1].y)}
-          r="3.5"
-          fill="currentColor"
-        />
-
-        {/* x labels */}
+        <circle cx={xScale(data[data.length - 1].x)} cy={yScale(data[data.length - 1].y)} r="3.5" fill="currentColor" />
         <text x={pad} y={h - pad + 16} fontSize="10" fill="currentColor" opacity={0.6}>
           Year {data[0].x}
         </text>
@@ -87,14 +74,12 @@ function formatR(n: number) {
 }
 
 export default function ProjectionToolPage() {
-  // Inputs
-  const [initial, setInitial] = useState(0);      // Initial lump sum (R)
-  const [monthly, setMonthly] = useState(2500);   // Monthly contribution (R)
-  const [years, setYears] = useState(10);         // Years
-  const [growth, setGrowth] = useState(6);        // Annual growth % (net)
-  const [escalation, setEscalation] = useState(0);// Annual contribution increase %
+  const [initial, setInitial] = useState(0);
+  const [monthly, setMonthly] = useState(2500);
+  const [years, setYears] = useState(10);
+  const [growth, setGrowth] = useState(6);
+  const [escalation, setEscalation] = useState(0);
 
-  // Calculations — simulate month by month (handles annual escalation)
   const { series, finalValue, totalContrib } = useMemo(() => {
     const months = Math.max(1, years) * 12;
     const rMonthly = growth / 100 / 12;
@@ -105,18 +90,11 @@ export default function ProjectionToolPage() {
     const pts: { x: number; y: number }[] = [];
 
     for (let m = 1; m <= months; m++) {
-      // escalate contribution at start of each new year (except the first)
-      if (m > 1 && (m - 1) % 12 === 0) {
-        mContr = mContr * (1 + escalation / 100);
-      }
+      if (m > 1 && (m - 1) % 12 === 0) mContr = mContr * (1 + escalation / 100);
       bal = (bal + mContr) * (1 + rMonthly);
       totalContribCalc += mContr;
-
-      if (m % 12 === 0) {
-        pts.push({ x: m / 12, y: bal });
-      }
+      if (m % 12 === 0) pts.push({ x: m / 12, y: bal });
     }
-
     return { series: pts, finalValue: bal, totalContrib: totalContribCalc };
   }, [initial, monthly, years, growth, escalation]);
 
@@ -137,19 +115,25 @@ export default function ProjectionToolPage() {
             Adjust the sliders to see how your savings could grow over time. Demo only — not financial advice.
           </p>
         </div>
-        <button
-          onClick={() => window.print()}
-          className="print:hidden rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          title="Download PDF"
-          aria-label="Download PDF"
-        >
-          Download PDF
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => window.print()}
+            className="print:hidden rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+            title="Download PDF"
+          >
+            Download PDF
+          </button>
+          <button
+            onClick={resetDefaults}
+            className="rounded border px-3 py-1.5 text-sm hover:bg-gray-50"
+          >
+            Reset
+          </button>
+        </div>
       </div>
 
       {/* Controls */}
       <section className="mt-6 space-y-6 rounded border bg-white p-4">
-        {/* Initial lump sum */}
         <div>
           <div className="flex items-center justify-between">
             <label className="block text-sm font-medium">Initial amount (once-off)</label>
@@ -160,19 +144,10 @@ export default function ProjectionToolPage() {
               onChange={(e) => setInitial(Number(e.target.value || 0))}
             />
           </div>
-          <input
-            type="range"
-            min={0}
-            max={2_000_000}
-            step={5_000}
-            value={initial}
-            onChange={(e) => setInitial(Number(e.target.value))}
-            className="mt-2 w-full"
-          />
+          <input type="range" min={0} max={2_000_000} step={5_000} value={initial} onChange={(e) => setInitial(Number(e.target.value))} className="mt-2 w-full" />
           <div className="text-xs text-gray-600 mt-1">{formatR(initial)}</div>
         </div>
 
-        {/* Monthly contribution */}
         <div>
           <div className="flex items-center justify-between">
             <label className="block text-sm font-medium">Monthly contribution</label>
@@ -183,19 +158,10 @@ export default function ProjectionToolPage() {
               onChange={(e) => setMonthly(Number(e.target.value || 0))}
             />
           </div>
-          <input
-            type="range"
-            min={0}
-            max={100_000}
-            step={500}
-            value={monthly}
-            onChange={(e) => setMonthly(Number(e.target.value))}
-            className="mt-2 w-full"
-          />
+          <input type="range" min={0} max={100_000} step={500} value={monthly} onChange={(e) => setMonthly(Number(e.target.value))} className="mt-2 w-full" />
           <div className="text-xs text-gray-600 mt-1">{formatR(monthly)}/mo</div>
         </div>
 
-        {/* Years */}
         <div>
           <div className="flex items-center justify-between">
             <label className="block text-sm font-medium">Projection period (years)</label>
@@ -206,19 +172,10 @@ export default function ProjectionToolPage() {
               onChange={(e) => setYears(Math.max(1, Number(e.target.value || 1)))}
             />
           </div>
-          <input
-            type="range"
-            min={1}
-            max={40}
-            step={1}
-            value={years}
-            onChange={(e) => setYears(Number(e.target.value))}
-            className="mt-2 w-full"
-          />
+          <input type="range" min={1} max={40} step={1} value={years} onChange={(e) => setYears(Number(e.target.value))} className="mt-2 w-full" />
           <div className="text-xs text-gray-600 mt-1">{years} year(s)</div>
         </div>
 
-        {/* Growth */}
         <div>
           <div className="flex items-center justify-between">
             <label className="block text-sm font-medium">Expected annual growth</label>
@@ -229,19 +186,10 @@ export default function ProjectionToolPage() {
               onChange={(e) => setGrowth(Number(e.target.value || 0))}
             />
           </div>
-          <input
-            type="range"
-            min={0}
-            max={20}
-            step={0.1}
-            value={growth}
-            onChange={(e) => setGrowth(Number(e.target.value))}
-            className="mt-2 w-full"
-          />
+          <input type="range" min={0} max={20} step={0.1} value={growth} onChange={(e) => setGrowth(Number(e.target.value))} className="mt-2 w-full" />
           <div className="text-xs text-gray-600 mt-1">{growth}% p.a.</div>
         </div>
 
-        {/* Escalation */}
         <div>
           <div className="flex items-center justify-between">
             <label className="block text-sm font-medium">Contribution escalation (annual)</label>
@@ -252,20 +200,11 @@ export default function ProjectionToolPage() {
               onChange={(e) => setEscalation(Number(e.target.value || 0))}
             />
           </div>
-          <input
-            type="range"
-            min={0}
-            max={15}
-            step={0.5}
-            value={escalation}
-            onChange={(e) => setEscalation(Number(e.target.value))}
-            className="mt-2 w-full"
-          />
+          <input type="range" min={0} max={15} step={0.5} value={escalation} onChange={(e) => setEscalation(Number(e.target.value))} className="mt-2 w-full" />
           <div className="text-xs text-gray-600 mt-1">{escalation}% / year</div>
         </div>
       </section>
 
-      {/* Summary cards */}
       <section className="mt-6 grid gap-4 sm:grid-cols-3">
         <div className="rounded bg-white p-4 border">
           <div className="text-sm text-gray-600">Total contributions</div>
@@ -281,7 +220,6 @@ export default function ProjectionToolPage() {
         </div>
       </section>
 
-      {/* Chart */}
       {series.length > 0 && (
         <section className="mt-8">
           <h2 className="text-xl font-semibold">Projection chart</h2>
@@ -289,7 +227,6 @@ export default function ProjectionToolPage() {
         </section>
       )}
 
-      {/* Table */}
       {series.length > 0 && (
         <section className="mt-8">
           <h2 className="text-xl font-semibold">Projection table</h2>

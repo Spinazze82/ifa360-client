@@ -1,3 +1,4 @@
+// File: src/app/astute/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -44,12 +45,12 @@ export default function AstutePage() {
 
       const arrayBuf = await file.arrayBuffer();
 
-      // Load client’s Astute PDF (password-protected PDFs will fail)
+      // Load client PDF (password-protected PDFs will fail)
       const astuteDoc = await PDFDocument.load(arrayBuf).catch(() => {
         throw new Error("Could not read the PDF. If it’s password-protected, please export an unprotected copy.");
       });
 
-      // Create wrapper PDF
+      // Create wrapper
       const outDoc = await PDFDocument.create();
       const font = await outDoc.embedFont(StandardFonts.Helvetica);
 
@@ -68,17 +69,23 @@ export default function AstutePage() {
       const note =
         "This pack contains the client’s Astute portfolio PDF. It is provided for information only and does not constitute financial advice.";
       cover.drawText(note, {
-        x: 40, y: lineY - 84, size: 11, font, color: rgb(0.2, 0.2, 0.2), maxWidth: width - 80, lineHeight: 14,
+        x: 40,
+        y: lineY - 84,
+        size: 11,
+        font,
+        color: rgb(0.2, 0.2, 0.2),
+        maxWidth: width - 80,
+        lineHeight: 14,
       });
 
       // Append Astute pages
       const copied = await outDoc.copyPages(astuteDoc, astuteDoc.getPageIndices());
       copied.forEach((p) => outDoc.addPage(p));
 
-      // Save to blob (use ArrayBuffer slice to satisfy TS)
+      // Save to blob (force a fresh ArrayBuffer to satisfy TS)
       const bytes = await outDoc.save(); // Uint8Array
-      const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
-      const blob = new Blob([ab], { type: "application/pdf" });
+      const copy = new Uint8Array(bytes);
+      const blob = new Blob([copy.buffer], { type: "application/pdf" });
 
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
@@ -177,7 +184,7 @@ export default function AstutePage() {
             {status === "working" ? "Creating…" : "Create PDF pack"}
           </button>
 
-        {downloadUrl && (
+          {downloadUrl && (
             <a
               href={downloadUrl}
               download={`Astute-Portfolio-Pack-${safeFileName(clientName || "Client")}-${formatDate().replace(/\s/g, "-")}.pdf`}
