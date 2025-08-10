@@ -1,4 +1,5 @@
-﻿import type { Metadata } from "next";
+﻿// File: src/app/layout.tsx
+import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 import { cookies } from "next/headers";
@@ -8,15 +9,20 @@ export const metadata: Metadata = {
   description: "Quotes, education, projections, portfolio tools, and more.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const hasSession = Boolean(cookies().get("ifa360_session"));
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies(); // <-- await here
+  const hasSession = Boolean(cookieStore.get("ifa360_session"));
 
   return (
     <html lang="en">
       <body className="min-h-screen bg-white text-gray-900">
+        {/* Header */}
         <header className="border-b bg-white">
           <div className="mx-auto flex max-w-6xl items-center justify-between p-4">
-            <Link href="/" className="font-bold text-lg">IFA360</Link>
+            <Link href="/" className="font-bold text-lg">
+              IFA360
+            </Link>
+
             <nav className="flex flex-wrap items-center gap-4 text-sm">
               <Link href="/quotes" className="hover:underline">Get Quotes</Link>
               <Link href="/projection" className="hover:underline">Projection</Link>
@@ -24,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/astute" className="hover:underline">Astute</Link>
               <Link href="/privacy" className="hover:underline">Privacy</Link>
               <Link href="/contact" className="hover:underline">Contact</Link>
+
               {!hasSession ? (
                 <>
                   <Link href="/login" className="hover:underline">Login</Link>
@@ -38,8 +45,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </header>
 
+        {/* Page */}
         <main className="min-h-[calc(100vh-120px)]">{children}</main>
 
+        {/* Footer */}
         <footer className="bg-gray-100 border-t p-4 text-center text-sm">
           © {new Date().getFullYear()} IFA360. All rights reserved.
         </footer>
