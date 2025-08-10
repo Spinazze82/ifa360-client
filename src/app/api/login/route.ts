@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
     const secret = new TextEncoder().encode(AUTH_SECRET);
     const now = Math.floor(Date.now() / 1000);
-    const exp = now + 60 * 60 * 24 * 7; // 7 days
+    const exp = now + 60 * 60 * 24 * 7;
 
     const token = await new SignJWT({
       sub: "ifa360-user",

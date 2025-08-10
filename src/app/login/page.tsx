@@ -1,9 +1,32 @@
 ﻿"use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 
-export const metadata = { title: "Login — IFA360" };
+export default function Page() {
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [notes, setNotes] = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "ok" | "error">("idle");
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus("sending");
+    setError("");
+
+    try {
+      const res = await fetch("https://formspree.io/f
+
+
+cd C:\Dev\ifa360-client\web
+
+# Overwrite: src/app/login/page.tsx
+@'
+"use client";
+
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function Page() {
   const [name, setName] = useState("");

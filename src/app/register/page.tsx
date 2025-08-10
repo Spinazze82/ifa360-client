@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 
-export const metadata = { title: "Register — IFA360" };
-
 export default function Page() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
