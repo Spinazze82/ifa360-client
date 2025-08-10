@@ -1,7 +1,7 @@
-// File: src/app/layout.tsx
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
+import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
   title: "IFA360 — Customer",
@@ -9,6 +9,8 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const hasSession = Boolean(cookies().get("ifa360_session"));
+
   return (
     <html lang="en">
       <body className="min-h-screen bg-white text-gray-900">
@@ -24,8 +26,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/projection" className="hover:underline">Projection</Link>
               <Link href="/education" className="hover:underline">Education</Link>
               <Link href="/astute" className="hover:underline">Astute</Link>
-              <Link href="/contact" className="hover:underline">Contact</Link>
               <Link href="/privacy" className="hover:underline">Privacy</Link>
+              <Link href="/contact" className="hover:underline">Contact</Link>
+
+              {!hasSession ? (
+                <>
+                  <Link href="/login" className="hover:underline">Login</Link>
+                  <Link href="/register" className="hover:underline">Register</Link>
+                </>
+              ) : (
+                <form action="/api/logout" method="POST">
+                  <button className="hover:underline" type="submit">Logout</button>
+                </form>
+              )}
             </nav>
           </div>
         </header>
