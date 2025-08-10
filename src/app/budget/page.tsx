@@ -88,37 +88,34 @@ function formatR(n: number) {
 
 export default function ProjectionToolPage() {
   // Inputs
-  const [initial, setInitial] = useState(0);                 // Initial lump sum (R)
-  const [monthly, setMonthly] = useState(2500);              // Monthly contribution (R)
-  const [years, setYears] = useState(10);                    // Years
-  const [growth, setGrowth] = useState(6);                   // Annual growth % (net of fees)
-  const [escalation, setEscalation] = useState(0);           // Annual contribution increase %
+  const [initial, setInitial] = useState(0);      // Initial lump sum (R)
+  const [monthly, setMonthly] = useState(2500);   // Monthly contribution (R)
+  const [years, setYears] = useState(10);         // Years
+  const [growth, setGrowth] = useState(6);        // Annual growth % (net)
+  const [escalation, setEscalation] = useState(0);// Annual contribution increase %
 
-  // Calculations — simulate month by month (handles annual escalation nicely)
+  // Calculations — simulate month by month (handles annual escalation)
   const { series, finalValue, totalContrib } = useMemo(() => {
     const months = Math.max(1, years) * 12;
     const rMonthly = growth / 100 / 12;
+
     let bal = initial;
     let mContr = monthly;
+    let totalContribCalc = initial;
     const pts: { x: number; y: number }[] = [];
 
     for (let m = 1; m <= months; m++) {
-      // escalate contribution at the start of each year (except first)
+      // escalate contribution at start of each new year (except the first)
       if (m > 1 && (m - 1) % 12 === 0) {
         mContr = mContr * (1 + escalation / 100);
       }
       bal = (bal + mContr) * (1 + rMonthly);
+      totalContribCalc += mContr;
+
       if (m % 12 === 0) {
         pts.push({ x: m / 12, y: bal });
       }
     }
-
-    const totalContribCalc = initial + Array.from({ length: months }).reduce((acc, _, idx) => {
-      // rebuild the same contribution schedule to sum contributions
-      const yearIndex = Math.floor(idx / 12);
-      const contrThisMonth = monthly * Math.pow(1 + escalation / 100, yearIndex);
-      return acc + contrThisMonth;
-    }, 0);
 
     return { series: pts, finalValue: bal, totalContrib: totalContribCalc };
   }, [initial, monthly, years, growth, escalation]);
