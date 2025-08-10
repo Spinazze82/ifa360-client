@@ -18,8 +18,8 @@ function formatR(n: number | null | undefined) {
 type CarrierRow = {
   key: string;
   name: string;
-  factor: number;          // brand-level multiplier (demo)
-  perks?: string;          // short note
+  factor: number; // brand-level multiplier (demo)
+  perks?: string;
 };
 
 function ResultsInner() {
@@ -48,7 +48,7 @@ function ResultsInner() {
   const disCover = Number(disCoverStr);
   const ipMonthly = Number(ipMonthlyStr);
 
-  // --- Base demo premium model (same as before) ---
+  // --- Base demo premium model ---
   const baseTotals = useMemo(() => {
     let lifePrem = 0;
     if (life > 0) {
@@ -91,9 +91,9 @@ function ResultsInner() {
     };
   }, [life, siCover, disCover, ipMonthly, smoker, siType, disType]);
 
-  // --- Mock carrier matrix (demo multipliers) ---
+  // --- Mock carrier matrix (demo multipliers, incl. Bidvest Life) ---
   const carriers: CarrierRow[] = [
-    { key: "discovery", name: "Discovery", factor: 1.00, perks: "Wellness-linked" },
+    { key: "discovery", name: "Discovery", factor: 1.0, perks: "Wellness-linked" },
     { key: "liberty", name: "Liberty", factor: 0.98, perks: "Strong disability options" },
     { key: "sanlam", name: "Sanlam", factor: 1.03, perks: "Broad cover range" },
     { key: "hollard", name: "Hollard", factor: 0.97, perks: "Value combos" },
@@ -101,26 +101,20 @@ function ResultsInner() {
     { key: "momentum", name: "Momentum", factor: 1.01, perks: "Partner discounts" },
     { key: "old-mutual", name: "Old Mutual", factor: 1.02, perks: "Large provider" },
     { key: "brightrock", name: "BrightRock", factor: 0.99, perks: "Needs-matched structure" },
+    { key: "bidvest-life", name: "Bidvest Life", factor: 1.0, perks: "Income protection specialist" },
   ];
 
   const carrierQuotes = useMemo(() => {
-    return carriers.map((c) => {
-      // Apply carrier factor to each component for a realistic-looking spread
-      const lifePrem = Math.round(baseTotals.lifePrem * c.factor);
-      const siPrem = Math.round(baseTotals.siPrem * (c.factor + 0.01)); // tiny variance per line
-      const disPrem = Math.round(baseTotals.disPrem * (c.factor - 0.01));
-      const ipPrem = Math.round(baseTotals.ipPrem * c.factor);
-      const total = lifePrem + siPrem + disPrem + ipPrem;
-
-      return {
-        ...c,
-        lifePrem,
-        siPrem,
-        disPrem,
-        ipPrem,
-        total,
-      };
-    }).sort((a, b) => a.total - b.total); // cheapest first
+    return carriers
+      .map((c) => {
+        const lifePrem = Math.round(baseTotals.lifePrem * c.factor);
+        const siPrem = Math.round(baseTotals.siPrem * (c.factor + 0.01));
+        const disPrem = Math.round(baseTotals.disPrem * (c.factor - 0.01));
+        const ipPrem = Math.round(baseTotals.ipPrem * c.factor);
+        const total = lifePrem + siPrem + disPrem + ipPrem;
+        return { ...c, lifePrem, siPrem, disPrem, ipPrem, total };
+      })
+      .sort((a, b) => a.total - b.total); // cheapest first
   }, [carriers, baseTotals]);
 
   // Lead capture (Formspree)
@@ -141,7 +135,6 @@ function ResultsInner() {
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
           form: "lead",
-          // who + what
           selectedCarrier,
           // personal
           name,
@@ -157,7 +150,7 @@ function ResultsInner() {
           disabilityType: disType,
           disabilityCover: disCoverStr,
           incomeProtectionMonthly: ipMonthlyStr,
-          // demo premiums
+          // base premiums (demo)
           base_premium_life: formatR(baseTotals.lifePrem),
           base_premium_severeIllness: formatR(baseTotals.siPrem),
           base_premium_disability: formatR(baseTotals.disPrem),
@@ -196,10 +189,22 @@ function ResultsInner() {
 
   return (
     <main className="p-8 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold">Your Quote Preview</h1>
-      <p className="mt-2 text-gray-600">
-        Demo estimates only — for illustration. Final pricing depends on underwriting and insurer rules.
-      </p>
+      <div className="flex items-center justify-between print:justify-start print:gap-6">
+        <div>
+          <h1 className="text-3xl font-bold">Your Quote Preview</h1>
+          <p className="mt-2 text-gray-600">
+            Demo estimates only — for illustration. Final pricing depends on underwriting and insurer rules.
+          </p>
+        </div>
+        <button
+          onClick={() => window.print()}
+          className="print:hidden rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          aria-label="Download PDF"
+          title="Download PDF"
+        >
+          Download PDF
+        </button>
+      </div>
 
       {/* Inputs summary */}
       <section className="mt-6 rounded border bg-white p-4">
