@@ -5,7 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "IFA360 — Customer",
-  description: "Quotes, education, projections, and portfolio tools.",
+  description: "Quotes, education, projections, portfolio tools, and more.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -19,12 +19,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               IFA360
             </Link>
 
-            <nav className="flex gap-4 text-sm">
+            <nav className="flex flex-wrap items-center gap-4 text-sm">
               <Link href="/quotes" className="hover:underline">Get Quotes</Link>
               <Link href="/projection" className="hover:underline">Projection</Link>
               <Link href="/education" className="hover:underline">Education</Link>
-              <Link href="/contact" className="hover:underline">Contact</Link>
               <Link href="/astute" className="hover:underline">Astute</Link>
+              <Link href="/contact" className="hover:underline">Contact</Link>
+              <Link href="/privacy" className="hover:underline">Privacy</Link>
             </nav>
           </div>
         </header>
