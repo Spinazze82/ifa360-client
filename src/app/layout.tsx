@@ -1,4 +1,5 @@
-﻿import type { Metadata } from "next";
+﻿// File: src/app/layout.tsx
+import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 import { cookies } from "next/headers";
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Server-side check for session cookie
   const hasSession = Boolean(cookies().get("ifa360_session"));
 
   return (
