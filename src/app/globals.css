@@ -42,3 +42,11 @@ body {
     border-color: #999 !important;
   }
 }
+@media print {
+  header, nav, footer, .print\:hidden {
+    display: none !important;
+  }
+  body { background: #fff !important; color: #000 !important; }
+  main { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+  table, th, td { border-color: #999 !important; }
+}

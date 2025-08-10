@@ -130,18 +130,22 @@ export default function ProjectionToolPage() {
 
   return (
     <main className="p-8 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Projection Tool</h1>
+      <div className="flex items-center justify-between print:justify-start print:gap-6">
+        <div>
+          <h1 className="text-3xl font-bold">Projection Tool</h1>
+          <p className="mt-2 text-gray-600">
+            Adjust the sliders to see how your savings could grow over time. Demo only — not financial advice.
+          </p>
+        </div>
         <button
-          onClick={resetDefaults}
-          className="rounded border px-3 py-1.5 text-sm hover:bg-gray-50"
+          onClick={() => window.print()}
+          className="print:hidden rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          title="Download PDF"
+          aria-label="Download PDF"
         >
-          Reset
+          Download PDF
         </button>
       </div>
-      <p className="mt-2 text-gray-600">
-        Adjust the sliders to see how your savings could grow over time. Demo only — not financial advice.
-      </p>
 
       {/* Controls */}
       <section className="mt-6 space-y-6 rounded border bg-white p-4">

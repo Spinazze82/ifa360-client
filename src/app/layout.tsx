@@ -24,7 +24,7 @@ export default function RootLayout({
             <nav className="flex gap-4 text-sm">
               <Link href="/" className="hover:underline">Home</Link>
               <Link href="/quotes" className="hover:underline">Quotes</Link>
-              <Link href="/budget" className="hover:underline">Budget Tools</Link>
+              <Link href="/projection" className="hover:underline">Projection</Link>
               <Link href="/education" className="hover:underline">Education</Link>
               <Link href="/contact" className="hover:underline">Contact</Link>
               <Link href="/privacy" className="hover:underline">Privacy</Link>
