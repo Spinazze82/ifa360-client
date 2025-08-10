@@ -15,6 +15,13 @@ function formatR(n: number | null | undefined) {
   return "R" + Math.round(n).toLocaleString();
 }
 
+type CarrierRow = {
+  key: string;
+  name: string;
+  factor: number;          // brand-level multiplier (demo)
+  perks?: string;          // short note
+};
+
 function ResultsInner() {
   const sp = useSearchParams();
 
@@ -41,9 +48,8 @@ function ResultsInner() {
   const disCover = Number(disCoverStr);
   const ipMonthly = Number(ipMonthlyStr);
 
-  // --- Demo premium model (placeholder) ---
-  const totals = useMemo(() => {
-    // Life cover (per R100k)
+  // --- Base demo premium model (same as before) ---
+  const baseTotals = useMemo(() => {
     let lifePrem = 0;
     if (life > 0) {
       const units = life / 100_000;
@@ -52,16 +58,14 @@ function ResultsInner() {
       lifePrem = units * basePerUnit * smokerFactor;
     }
 
-    // Severe illness: base per R100k + type factor
     let siPrem = 0;
     if (siCover > 0) {
       const units = siCover / 100_000;
       const basePerUnit = 65; // demo only
-      const typeFactor = siType === "accelerated" ? 0.85 : 1.0; // accelerated cheaper (uses life pool)
+      const typeFactor = siType === "accelerated" ? 0.85 : 1.0;
       siPrem = units * basePerUnit * typeFactor;
     }
 
-    // Disability lump sum: per R100k + type factor
     let disPrem = 0;
     if (disCover > 0) {
       const units = disCover / 100_000;
@@ -70,7 +74,6 @@ function ResultsInner() {
       disPrem = units * basePerUnit * typeFactor;
     }
 
-    // Income protection (monthly benefit): per R1000 benefit
     let ipPrem = 0;
     if (ipMonthly > 0) {
       const units = ipMonthly / 1_000;
@@ -88,11 +91,44 @@ function ResultsInner() {
     };
   }, [life, siCover, disCover, ipMonthly, smoker, siType, disType]);
 
+  // --- Mock carrier matrix (demo multipliers) ---
+  const carriers: CarrierRow[] = [
+    { key: "discovery", name: "Discovery", factor: 1.00, perks: "Wellness-linked" },
+    { key: "liberty", name: "Liberty", factor: 0.98, perks: "Strong disability options" },
+    { key: "sanlam", name: "Sanlam", factor: 1.03, perks: "Broad cover range" },
+    { key: "hollard", name: "Hollard", factor: 0.97, perks: "Value combos" },
+    { key: "capital-legacy", name: "Capital Legacy", factor: 1.05, perks: "Estate-focused add-ons" },
+    { key: "momentum", name: "Momentum", factor: 1.01, perks: "Partner discounts" },
+    { key: "old-mutual", name: "Old Mutual", factor: 1.02, perks: "Large provider" },
+    { key: "brightrock", name: "BrightRock", factor: 0.99, perks: "Needs-matched structure" },
+  ];
+
+  const carrierQuotes = useMemo(() => {
+    return carriers.map((c) => {
+      // Apply carrier factor to each component for a realistic-looking spread
+      const lifePrem = Math.round(baseTotals.lifePrem * c.factor);
+      const siPrem = Math.round(baseTotals.siPrem * (c.factor + 0.01)); // tiny variance per line
+      const disPrem = Math.round(baseTotals.disPrem * (c.factor - 0.01));
+      const ipPrem = Math.round(baseTotals.ipPrem * c.factor);
+      const total = lifePrem + siPrem + disPrem + ipPrem;
+
+      return {
+        ...c,
+        lifePrem,
+        siPrem,
+        disPrem,
+        ipPrem,
+        total,
+      };
+    }).sort((a, b) => a.total - b.total); // cheapest first
+  }, [carriers, baseTotals]);
+
   // Lead capture (Formspree)
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "ok" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [selectedCarrier, setSelectedCarrier] = useState<string>("all");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -105,6 +141,8 @@ function ResultsInner() {
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
           form: "lead",
+          // who + what
+          selectedCarrier,
           // personal
           name,
           id,
@@ -119,12 +157,21 @@ function ResultsInner() {
           disabilityType: disType,
           disabilityCover: disCoverStr,
           incomeProtectionMonthly: ipMonthlyStr,
-          // premiums (demo)
-          premium_life: formatR(totals.lifePrem),
-          premium_severeIllness: formatR(totals.siPrem),
-          premium_disability: formatR(totals.disPrem),
-          premium_incomeProtection: formatR(totals.ipPrem),
-          premium_total: formatR(totals.total),
+          // demo premiums
+          base_premium_life: formatR(baseTotals.lifePrem),
+          base_premium_severeIllness: formatR(baseTotals.siPrem),
+          base_premium_disability: formatR(baseTotals.disPrem),
+          base_premium_incomeProtection: formatR(baseTotals.ipPrem),
+          base_premium_total: formatR(baseTotals.total),
+          // carrier table snapshot
+          carriers: carrierQuotes.map((c) => ({
+            name: c.name,
+            total: formatR(c.total),
+            life: formatR(c.lifePrem),
+            si: formatR(c.siPrem),
+            dis: formatR(c.disPrem),
+            ip: formatR(c.ipPrem),
+          })),
           // contact
           clientEmail,
           clientPhone,
@@ -148,13 +195,13 @@ function ResultsInner() {
   }
 
   return (
-    <main className="p-8 max-w-3xl mx-auto">
+    <main className="p-8 max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold">Your Quote Preview</h1>
       <p className="mt-2 text-gray-600">
-        Demo estimates only. Final pricing depends on underwriting and insurer rules.
+        Demo estimates only — for illustration. Final pricing depends on underwriting and insurer rules.
       </p>
 
-      {/* Summary of inputs */}
+      {/* Inputs summary */}
       <section className="mt-6 rounded border bg-white p-4">
         <h2 className="text-xl font-semibold">Your details</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -167,7 +214,7 @@ function ResultsInner() {
         </div>
       </section>
 
-      {/* Covers selected */}
+      {/* Cover selections */}
       <section className="mt-6 rounded border bg-white p-4">
         <h2 className="text-xl font-semibold">Cover selections</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -178,39 +225,91 @@ function ResultsInner() {
         </div>
       </section>
 
-      {/* Premium estimate */}
+      {/* Base premium */}
       <section className="mt-6 rounded border bg-white p-4">
-        <h2 className="text-xl font-semibold">Estimated monthly premium (demo)</h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <h2 className="text-xl font-semibold">Estimated monthly premium (base demo)</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded bg-gray-50 p-3">
             <div className="text-sm text-gray-600">Life</div>
-            <div className="text-2xl font-bold">{formatR(totals.lifePrem)}</div>
+            <div className="text-2xl font-bold">{formatR(baseTotals.lifePrem)}</div>
           </div>
           <div className="rounded bg-gray-50 p-3">
             <div className="text-sm text-gray-600">Severe illness</div>
-            <div className="text-2xl font-bold">{formatR(totals.siPrem)}</div>
+            <div className="text-2xl font-bold">{formatR(baseTotals.siPrem)}</div>
           </div>
           <div className="rounded bg-gray-50 p-3">
             <div className="text-sm text-gray-600">Disability</div>
-            <div className="text-2xl font-bold">{formatR(totals.disPrem)}</div>
+            <div className="text-2xl font-bold">{formatR(baseTotals.disPrem)}</div>
           </div>
           <div className="rounded bg-gray-50 p-3">
             <div className="text-sm text-gray-600">Income protection</div>
-            <div className="text-2xl font-bold">{formatR(totals.ipPrem)}</div>
+            <div className="text-2xl font-bold">{formatR(baseTotals.ipPrem)}</div>
           </div>
         </div>
         <div className="mt-4 text-xl">
-          <span className="font-semibold">Total estimate:</span> {formatR(totals.total)}
+          <span className="font-semibold">Total estimate:</span> {formatR(baseTotals.total)}
         </div>
-        <p className="mt-2 text-xs text-gray-500">
-          Illustrative only; not financial advice.
+      </section>
+
+      {/* Multi-carrier quotes (demo) */}
+      <section className="mt-6 rounded border bg-white p-4">
+        <h2 className="text-xl font-semibold">Carrier quotes (demo)</h2>
+        <p className="mt-1 text-sm text-gray-600">
+          These are illustrative variations per carrier. We’ll replace with real APIs later.
         </p>
+
+        <div className="mt-4 overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="text-left border-b">
+                <th className="py-2 pr-4">Carrier</th>
+                <th className="py-2 pr-4">Life</th>
+                <th className="py-2 pr-4">Severe Illness</th>
+                <th className="py-2 pr-4">Disability</th>
+                <th className="py-2 pr-4">Income Prot.</th>
+                <th className="py-2 pr-4">Total</th>
+                <th className="py-2">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {carrierQuotes.map((c) => (
+                <tr key={c.key} className="border-b last:border-none">
+                  <td className="py-2 pr-4">
+                    <div className="font-medium">{c.name}</div>
+                    {c.perks && <div className="text-xs text-gray-500">{c.perks}</div>}
+                  </td>
+                  <td className="py-2 pr-4">{formatR(c.lifePrem)}</td>
+                  <td className="py-2 pr-4">{formatR(c.siPrem)}</td>
+                  <td className="py-2 pr-4">{formatR(c.disPrem)}</td>
+                  <td className="py-2 pr-4">{formatR(c.ipPrem)}</td>
+                  <td className="py-2 pr-4 font-semibold">{formatR(c.total)}</td>
+                  <td className="py-2">
+                    <button
+                      onClick={() => setSelectedCarrier(c.name)}
+                      className="rounded bg-blue-600 px-3 py-1.5 text-white hover:bg-blue-700 text-xs"
+                    >
+                      Request this quote
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {selectedCarrier !== "all" && (
+          <p className="mt-3 text-sm">
+            Selected carrier: <span className="font-medium">{selectedCarrier}</span>
+          </p>
+        )}
       </section>
 
       {/* Lead capture */}
       <section className="mt-8 rounded border bg-white p-4">
         <h2 className="text-2xl font-semibold">Talk to an adviser</h2>
-        <p className="mt-1 text-gray-600">Share your contact details and we’ll get an authorised adviser to contact you.</p>
+        <p className="mt-1 text-gray-600">
+          Choose a specific carrier above (optional), add your contact details, and we’ll get an authorised adviser to contact you.
+        </p>
 
         <form onSubmit={handleSubmit} className="mt-4 grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-1">
