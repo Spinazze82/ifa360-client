@@ -1,66 +1,72 @@
 "use client";
+
 import { useState } from "react";
 
-export default function ContactPage() {
+export default function Page() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "ok" | "error">("idle");
-  const [errorMsg, setErrorMsg] = useState("");
+  const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setStatus("sending");
-    setErrorMsg("");
+    setError("");
 
     try {
       const res = await fetch("https://formspree.io/f/movlyeqe", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ name, email, message, form: "contact" }),
+        body: JSON.stringify({
+          form: "contact",
+          name,
+          email,
+          message,
+          source: "ifa360-customer-site",
+        }),
       });
 
-      if (res.ok) {
-        setStatus("ok");
-        setName("");
-        setEmail("");
-        setMessage("");
-      } else {
+      if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setErrorMsg(data?.error || "Something went wrong. Please try again.");
         setStatus("error");
+        setError(data?.error || "Something went wrong. Please try again.");
+        return;
       }
-    } catch (err) {
-      setErrorMsg("Network error. Please try again.");
+
+      setStatus("ok");
+      setName("");
+      setEmail("");
+      setMessage("");
+    } catch {
       setStatus("error");
+      setError("Network error. Please try again.");
     }
   }
 
   return (
-    <main className="p-8 max-w-xl mx-auto">
+    <main className="p-8 max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold">Contact</h1>
-      <p className="mt-2 text-gray-600">Have a question? Send us a message.</p>
+      <p className="mt-2 text-gray-600">We’ll get back to you as soon as possible.</p>
 
-      <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
-          <label className="block text-sm font-medium">Your name</label>
+          <label className="block text-sm font-medium">Name</label>
           <input
             className="mt-1 w-full rounded border p-2"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Your full name"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium">Your email</label>
+          <label className="block text-sm font-medium">Email</label>
           <input
             type="email"
             className="mt-1 w-full rounded border p-2"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
             required
           />
         </div>
@@ -68,10 +74,10 @@ export default function ContactPage() {
         <div>
           <label className="block text-sm font-medium">Message</label>
           <textarea
-            className="mt-1 w-full rounded border p-2 min-h-32"
+            className="mt-1 w-full rounded border p-2"
+            rows={5}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="How can we help?"
             required
           />
         </div>
@@ -81,15 +87,11 @@ export default function ContactPage() {
           disabled={status === "sending"}
           className="rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-60"
         >
-          {status === "sending" ? "Sending..." : "Send message"}
+          {status === "sending" ? "Sending…" : "Send"}
         </button>
 
-        {status === "ok" && (
-          <p className="text-sm text-green-700 mt-2">Thanks! We’ll be in touch shortly.</p>
-        )}
-        {status === "error" && (
-          <p className="text-sm text-red-700 mt-2">{errorMsg}</p>
-        )}
+        {status === "ok" && <p className="text-sm text-green-700">Thanks — we’ll be in touch.</p>}
+        {status === "error" && <p className="text-sm text-red-700">{error}</p>}
       </form>
     </main>
   );

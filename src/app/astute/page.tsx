@@ -39,12 +39,12 @@ export default function AstutePage() {
       setError("");
       setDownloadUrl(null);
 
-      // ⬇️ Dynamic import to avoid bundling/SSR issues
+      // Dynamic import avoids SSR/bundling hiccups
       const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
 
       const arrayBuf = await file.arrayBuffer();
 
-      // Load client’s Astute PDF (note: password-protected PDFs will fail)
+      // Load client’s Astute PDF (password-protected PDFs will fail)
       const astuteDoc = await PDFDocument.load(arrayBuf).catch(() => {
         throw new Error("Could not read the PDF. If it’s password-protected, please export an unprotected copy.");
       });
@@ -53,26 +53,12 @@ export default function AstutePage() {
       const outDoc = await PDFDocument.create();
       const font = await outDoc.embedFont(StandardFonts.Helvetica);
 
-      // A4 page
+      // A4 cover page
       const cover = outDoc.addPage([595.28, 841.89]);
       const { width, height } = cover.getSize();
 
-      // Header bar
-      cover.drawRectangle({
-        x: 0,
-        y: height - 80,
-        width,
-        height: 80,
-        color: rgb(0.09, 0.29, 0.6),
-      });
-
-      cover.drawText("Portfolio Pack", {
-        x: 40,
-        y: height - 50,
-        size: 22,
-        color: rgb(1, 1, 1),
-        font,
-      });
+      cover.drawRectangle({ x: 0, y: height - 80, width, height: 80, color: rgb(0.09, 0.29, 0.6) });
+      cover.drawText("Portfolio Pack", { x: 40, y: height - 50, size: 22, color: rgb(1, 1, 1), font });
 
       const lineY = height - 120;
       cover.drawText(`Client: ${clientName || "—"}`, { x: 40, y: lineY, size: 14, font, color: rgb(0, 0, 0) });
@@ -82,13 +68,7 @@ export default function AstutePage() {
       const note =
         "This pack contains the client’s Astute portfolio PDF. It is provided for information only and does not constitute financial advice.";
       cover.drawText(note, {
-        x: 40,
-        y: lineY - 84,
-        size: 11,
-        font,
-        color: rgb(0.2, 0.2, 0.2),
-        maxWidth: width - 80,
-        lineHeight: 14,
+        x: 40, y: lineY - 84, size: 11, font, color: rgb(0.2, 0.2, 0.2), maxWidth: width - 80, lineHeight: 14,
       });
 
       // Append Astute pages
@@ -101,9 +81,14 @@ export default function AstutePage() {
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
       setStatus("done");
-    } catch (e: any) {
+    } catch (e: unknown) {
+      // No explicit 'any' — make a safe message
+      const message =
+        e instanceof Error
+          ? e.message
+          : "Could not build the PDF. Please ensure the upload is a valid, unprotected PDF.";
       console.error(e);
-      setError(e?.message || "Could not build the PDF. Please ensure the upload is a valid, unprotected PDF.");
+      setError(message);
       setStatus("error");
     }
   }

@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        temperature: 0.4, // a bit more variety
+        temperature: 0.4,
         max_tokens: 350,
         messages: [
           {
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
       "Sorry, I couldn’t generate a response. Please try again.";
 
     return NextResponse.json({ answer });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { error: "Unexpected server error." },
       { status: 500 }
