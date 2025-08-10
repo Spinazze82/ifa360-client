@@ -75,14 +75,15 @@ export default function AstutePage() {
       const copied = await outDoc.copyPages(astuteDoc, astuteDoc.getPageIndices());
       copied.forEach((p) => outDoc.addPage(p));
 
-      // Save to blob
-      const bytes = await outDoc.save();
-      const blob = new Blob([bytes], { type: "application/pdf" });
+      // Save to blob (use ArrayBuffer slice to satisfy TS)
+      const bytes = await outDoc.save(); // Uint8Array
+      const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+      const blob = new Blob([ab], { type: "application/pdf" });
+
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
       setStatus("done");
     } catch (e: unknown) {
-      // No explicit 'any' — make a safe message
       const message =
         e instanceof Error
           ? e.message
@@ -176,7 +177,7 @@ export default function AstutePage() {
             {status === "working" ? "Creating…" : "Create PDF pack"}
           </button>
 
-          {downloadUrl && (
+        {downloadUrl && (
             <a
               href={downloadUrl}
               download={`Astute-Portfolio-Pack-${safeFileName(clientName || "Client")}-${formatDate().replace(/\s/g, "-")}.pdf`}
