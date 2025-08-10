@@ -1,28 +1,4 @@
-﻿"use client";
-
-import { useState } from "react";
-
-export default function Page() {
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [mobile, setMobile] = useState("");
-  const [notes, setNotes] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "ok" | "error">("idle");
-  const [error, setError] = useState("");
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setStatus("sending");
-    setError("");
-
-    try {
-      const res = await fetch("https://formspree.io/f
-
-
-cd C:\Dev\ifa360-client\web
-
-# Overwrite: src/app/login/page.tsx
-@'
+﻿// File: src/app/login/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -72,15 +48,31 @@ export default function Page() {
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
           <label className="block text-sm font-medium">Name (optional)</label>
-          <input className="mt-1 w-full rounded border p-2" value={name} onChange={(e) => setName(e.target.value)} />
+          <input
+            className="mt-1 w-full rounded border p-2"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
         </div>
+
         <div>
           <label className="block text-sm font-medium">Email (optional)</label>
-          <input type="email" className="mt-1 w-full rounded border p-2" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input
+            type="email"
+            className="mt-1 w-full rounded border p-2"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </div>
+
         <div>
           <label className="block text-sm font-medium">Access Code</label>
-          <input className="mt-1 w-full rounded border p-2" value={code} onChange={(e) => setCode(e.target.value)} required />
+          <input
+            className="mt-1 w-full rounded border p-2"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            required
+          />
         </div>
 
         <button
@@ -94,7 +86,10 @@ export default function Page() {
         {status === "error" && <p className="text-sm text-red-700">{error}</p>}
 
         <p className="text-sm text-gray-600">
-          Don’t have an Access Code? <a href="/register" className="text-blue-700 underline">Register</a>.
+          Don’t have an Access Code?{" "}
+          <a href="/register" className="text-blue-700 underline">
+            Register
+          </a>.
         </p>
       </form>
     </main>
