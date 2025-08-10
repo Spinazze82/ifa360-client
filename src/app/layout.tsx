@@ -1,45 +1,40 @@
-import "./globals.css";
+// File: src/app/layout.tsx
 import type { Metadata } from "next";
 import Link from "next/link";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "IFA360 — Customer Portal",
-  description: "Customer portal with quotes, tools, and education",
+  title: "IFA360 — Customer",
+  description: "Quotes, education, projections, and portfolio tools.",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
+      <body className="min-h-screen bg-white text-gray-900">
         {/* Header */}
-        <header className="bg-blue-600 text-white shadow-md">
-          <div className="mx-auto max-w-6xl flex items-center justify-between p-4">
-            <Link href="/" className="text-lg font-bold">
+        <header className="border-b bg-white">
+          <div className="mx-auto flex max-w-6xl items-center justify-between p-4">
+            <Link href="/" className="font-bold text-lg">
               IFA360
             </Link>
+
             <nav className="flex gap-4 text-sm">
-              <Link href="/" className="hover:underline">Home</Link>
-              <Link href="/quotes" className="hover:underline">Quotes</Link>
+              <Link href="/quotes" className="hover:underline">Get Quotes</Link>
               <Link href="/projection" className="hover:underline">Projection</Link>
               <Link href="/education" className="hover:underline">Education</Link>
               <Link href="/contact" className="hover:underline">Contact</Link>
-              <Link href="/privacy" className="hover:underline">Privacy</Link>
+              <Link href="/astute" className="hover:underline">Astute</Link>
             </nav>
           </div>
         </header>
 
-        {/* Main content */}
-        <main className="flex-1 mx-auto max-w-6xl p-4">{children}</main>
+        {/* Page */}
+        <main className="min-h-[calc(100vh-120px)]">{children}</main>
 
         {/* Footer */}
-        <footer className="bg-white border-t">
-          <div className="mx-auto max-w-6xl p-4 text-center text-sm text-gray-600">
-            © {new Date().getFullYear()} IFA360. All rights reserved.
-          </div>
+        <footer className="bg-gray-100 border-t p-4 text-center text-sm">
+          © {new Date().getFullYear()} IFA360. All rights reserved.
         </footer>
       </body>
     </html>
