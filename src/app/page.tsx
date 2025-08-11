@@ -6,82 +6,72 @@ export default function HomePage() {
     <div>
       {/* Hero */}
       <section className="container mt-10">
-        <div className="panel p-8 md:p-12">
-          <div className="grid gap-6 md:grid-cols-2 md:items-center">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-                Make better money moves with{" "}
-                <span className="text-gradient">clarity & speed</span>.
-              </h1>
-              <p className="mt-4 text-white/80">
-                Compare quotes in minutes and project how your investments could grow.
-                No jargon. No fuss.
-              </p>
-
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link href="/quotes" className="btn btn-brand">Get Quotes</Link>
-                <Link href="/projection" className="btn btn-ghost">Open Projection Tool</Link>
-              </div>
-
-              <ul className="mt-6 grid gap-2 text-sm text-white/70">
-                <li>✅ Simple, guided forms</li>
-                <li>✅ Clear results & downloadable summaries</li>
-                <li>✅ Built with privacy in mind</li>
-              </ul>
+        <div className="grid gap-8 md:grid-cols-2 md:items-center">
+          <div>
+            <p className="kicker">Welcome</p>
+            <h1 className="mt-2 text-4xl font-bold tracking-tight">
+              Compare quotes. Run projections. Make confident choices.
+            </h1>
+            <p className="mt-3 text-muted">
+              Quick forms, clear results, and a download you can share. No fluff.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/quotes" className="btn btn-primary">Get Quotes</Link>
+              <Link href="/projection" className="btn btn-ghost">Open Projection Tool</Link>
             </div>
+            <ul className="mt-6 grid gap-2 text-sm text-gray-700">
+              <li>• Clean side-by-side comparisons</li>
+              <li>• Simple sliders for “what-if” scenarios</li>
+              <li>• Print & download summaries</li>
+            </ul>
+          </div>
 
-            <div className="hidden md:block">
-              {/* Decorative card stack */}
-              <div className="mx-auto max-w-sm">
-                <div className="card p-5 rotate-[-3deg] translate-x-3 translate-y-2">
-                  <h3 className="text-white/90 font-medium">Projection preview</h3>
-                  <div className="mt-3 h-32 rounded-xl bg-white/5" />
-                  <div className="mt-3 flex justify-between text-xs text-white/60">
-                    <span>Total contributions</span>
-                    <span>Projected value</span>
-                  </div>
+          <div className="grid gap-4">
+            <div className="card p-5">
+              <div className="text-sm text-gray-500">Quote Example</div>
+              <div className="mt-3 grid grid-cols-3 gap-3">
+                <div className="rounded-lg border p-3 text-center">
+                  <div className="text-xs text-gray-500">Carrier A</div>
+                  <div className="mt-1 font-semibold">R 450</div>
                 </div>
-                <div className="card p-5 -mt-6">
-                  <h3 className="text-white/90 font-medium">Quote comparison</h3>
-                  <div className="mt-3 grid grid-cols-3 gap-2">
-                    <div className="h-20 rounded-xl bg-white/5" />
-                    <div className="h-20 rounded-xl bg-white/5" />
-                    <div className="h-20 rounded-xl bg-white/5" />
-                  </div>
+                <div className="rounded-lg border p-3 text-center">
+                  <div className="text-xs text-gray-500">Carrier B</div>
+                  <div className="mt-1 font-semibold">R 489</div>
+                </div>
+                <div className="rounded-lg border p-3 text-center">
+                  <div className="text-xs text-gray-500">Carrier C</div>
+                  <div className="mt-1 font-semibold">R 505</div>
                 </div>
               </div>
             </div>
-
+            <div className="card p-5">
+              <div className="text-sm text-gray-500">Projection Snapshot</div>
+              <div className="mt-3 h-24 rounded-lg border bg-gray-50" />
+              <div className="mt-2 flex justify-between text-xs text-gray-600">
+                <span>Total contributions</span>
+                <span>Projected value</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Actions */}
+      {/* Quick actions */}
       <section className="container mt-10 grid gap-6 md:grid-cols-2">
         <Link href="/quotes" className="card p-6">
-          <div className="flex items-start gap-4">
-            <div className="rounded-xl bg-white/10 p-3">📝</div>
-            <div>
-              <h2 className="text-xl font-semibold">Get Quotes</h2>
-              <p className="mt-1 text-white/70">
-                Enter a few details and see side-by-side options. Save a PDF or share.
-              </p>
-              <span className="mt-3 inline-block btn btn-ghost">Start</span>
-            </div>
-          </div>
+          <h2 className="text-xl font-semibold">Get Quotes</h2>
+          <p className="mt-1 text-muted">
+            Enter a few details and compare options side by side.
+          </p>
+          <span className="mt-3 inline-block btn btn-ghost">Start</span>
         </Link>
 
         <Link href="/projection" className="card p-6">
-          <div className="flex items-start gap-4">
-            <div className="rounded-xl bg-white/10 p-3">📈</div>
-            <div>
-              <h2 className="text-xl font-semibold">Projection Tool</h2>
-              <p className="mt-1 text-white/70">
-                Use sliders to test “what-ifs” and download a neat summary.
-              </p>
-              <span className="mt-3 inline-block btn btn-ghost">Open tool</span>
-            </div>
-          </div>
+          <h2 className="text-xl font-semibold">Projection Tool</h2>
+          <p className="mt-1 text-muted">
+            Test monthly contributions, growth, and time easily.
+          </p>
+          <span className="mt-3 inline-block btn btn-ghost">Open tool</span>
         </Link>
       </section>
     </div>

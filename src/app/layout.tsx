@@ -5,37 +5,31 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "IFA360 — Customer",
-  description: "Quotes and projections made simple.",
+  description: "Compare quotes and run simple investment projections.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen">
-        {/* Sticky glass header */}
-        <header className="sticky top-0 z-40 border-b border-white/10 bg-[color:var(--panel)]/70 backdrop-blur-xl">
-          <div className="container flex h-14 items-center justify-between">
-            <Link href="/" className="font-semibold tracking-tight text-white">
-              IFA360
-            </Link>
-
-            <nav className="flex items-center gap-5 text-sm text-white/90">
-              <Link href="/quotes" className="hoverline">Get Quotes</Link>
-              <Link href="/projection" className="hoverline">Projection</Link>
-              {/* Keep Privacy if you need it; remove if not */}
-              <Link href="/privacy" className="hoverline">Privacy</Link>
+      <body>
+        <header className="header">
+          <div className="container h-16 flex items-center justify-between">
+            <Link href="/" className="text-lg font-semibold tracking-tight">IFA360</Link>
+            <nav className="flex items-center gap-6">
+              <Link href="/quotes" className="navlink">Get Quotes</Link>
+              <Link href="/projection" className="navlink">Projection</Link>
+              {/* Keep Privacy if you need it */}
+              <Link href="/privacy" className="navlink">Privacy</Link>
             </nav>
           </div>
         </header>
 
-        {/* Page */}
-        <main className="pb-20">{children}</main>
+        <main className="pb-16">{children}</main>
 
-        {/* Footer */}
-        <footer className="border-t border-white/10 bg-[color:var(--panel)]/60">
-          <div className="container flex h-16 items-center justify-between text-sm text-white/70">
+        <footer className="border-t" style={{borderColor: "var(--border)"}}>
+          <div className="container h-16 flex items-center justify-between text-sm text-gray-600">
             <span>© {new Date().getFullYear()} IFA360</span>
-            <span className="hidden sm:inline">Built for simple, fast financial decisions.</span>
+            <span className="hidden sm:inline">Simple comparisons. Clear decisions.</span>
           </div>
         </footer>
       </body>
