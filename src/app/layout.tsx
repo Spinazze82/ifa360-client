@@ -12,13 +12,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="min-h-screen bg-white text-gray-900">
-        {/* Header */}
+        {/* Header with tabs */}
         <header className="border-b bg-white">
           <div className="container flex h-16 items-center justify-between">
             <Link href="/" className="font-semibold tracking-tight">IFA360</Link>
             <nav className="flex items-center gap-6 text-sm">
               <Link href="/quotes" className="hover:underline">Get Quotes</Link>
               <Link href="/projection" className="hover:underline">Projection</Link>
+              {/* Keep Privacy if you want; remove this line if not needed */}
+              <Link href="/privacy" className="hover:underline">Privacy</Link>
             </nav>
           </div>
         </header>
