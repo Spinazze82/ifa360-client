@@ -1,35 +1,31 @@
-﻿import type { Metadata } from "next";
-import Link from "next/link";
+﻿// src/app/layout.tsx
 import "./globals.css";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import Link from "next/link";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "IFA360 — Customer",
-  description: "Smarter insurance decisions, in minutes.",
+  title: "IFA360 — Customer Portal",
+  description: "Customer-facing portal for insurance quotes and tools",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-white text-gray-900">
-        {/* Top bar with tabs (like pic 2) */}
-        <header className="border-b bg-white">
-          <div className="container flex h-16 items-center justify-between">
-            <Link href="/" className="text-lg font-semibold tracking-tight">IFA360</Link>
-            <nav className="flex items-center gap-6 text-sm">
-              <Link href="/quotes" className="hover:underline">Get Quotes</Link>
-              <Link href="/projection" className="hover:underline">Projection</Link>
-            </nav>
-          </div>
-        </header>
+      <body className={inter.className}>
+        {/* Navigation Bar (blue) */}
+        <nav className="bg-blue-600 p-4 text-white">
+          <ul className="container flex space-x-6">
+            <li><Link href="/" className="hover:underline">Home</Link></li>
+            <li><Link href="/quotes" className="hover:underline">Get Quotes</Link></li>
+            <li><Link href="/projection" className="hover:underline">Projection</Link></li>
+          </ul>
+        </nav>
 
-        <main className="min-h-[calc(100vh-128px)] bg-gray-50">{children}</main>
-
-        <footer className="border-t bg-white">
-          <div className="container h-16 flex items-center justify-between text-sm text-gray-600">
-            <span>© {new Date().getFullYear()} IFA360</span>
-            <span className="hidden sm:inline">Simple comparisons. Clear decisions.</span>
-          </div>
-        </footer>
+        {/* Main Page Content */}
+        <main className="container py-8">{children}</main>
       </body>
     </html>
   );
