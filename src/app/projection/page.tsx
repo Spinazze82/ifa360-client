@@ -106,6 +106,56 @@ export default function ProjectionToolPage() {
     setEscalation(0);
   }
 
+  // Contact form state
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "ok" | "error">("idle");
+  const [error, setError] = useState("");
+
+  async function sendQuoteRequest(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus("sending");
+    setError("");
+    try {
+      const res = await fetch("https://formspree.io/f/movlyeqe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          form: "investment_quote_request",
+          fullName,
+          email,
+          mobile,
+          // include latest projection summary for adviser context
+          projection: {
+            initial,
+            monthly,
+            years,
+            growth,
+            escalation,
+            totalContrib: Math.round(totalContrib),
+            projectedValue: Math.round(finalValue),
+          },
+          source: "ifa360-projection-page",
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data?.error || "Something went wrong. Please try again.");
+        setStatus("error");
+        return;
+      }
+      setStatus("ok");
+      setFullName("");
+      setEmail("");
+      setMobile("");
+    } catch {
+      setError("Network error. Please try again.");
+      setStatus("error");
+    }
+  }
+
   return (
     <main className="p-8 max-w-3xl mx-auto">
       <div className="flex items-center justify-between print:justify-start print:gap-6">
@@ -144,9 +194,10 @@ export default function ProjectionToolPage() {
               onChange={(e) => setInitial(Number(e.target.value || 0))}
             />
           </div>
-          <input type="range" min={0} max={2_000_000} step={5_000} value={initial} onChange={(e) => setInitial(Number(e.target.value))} className="mt-2 w-full" />
-          <div className="text-xs text-gray-600 mt-1">{formatR(initial)}</div>
         </div>
+
+        <input type="range" min={0} max={2_000_000} step={5_000} value={initial} onChange={(e) => setInitial(Number(e.target.value))} className="w-full" />
+        <div className="text-xs text-gray-600">{formatR(initial)}</div>
 
         <div>
           <div className="flex items-center justify-between">
@@ -158,9 +209,10 @@ export default function ProjectionToolPage() {
               onChange={(e) => setMonthly(Number(e.target.value || 0))}
             />
           </div>
-          <input type="range" min={0} max={100_000} step={500} value={monthly} onChange={(e) => setMonthly(Number(e.target.value))} className="mt-2 w-full" />
-          <div className="text-xs text-gray-600 mt-1">{formatR(monthly)}/mo</div>
         </div>
+
+        <input type="range" min={0} max={100_000} step={500} value={monthly} onChange={(e) => setMonthly(Number(e.target.value))} className="w-full" />
+        <div className="text-xs text-gray-600">{formatR(monthly)}/mo</div>
 
         <div>
           <div className="flex items-center justify-between">
@@ -172,9 +224,10 @@ export default function ProjectionToolPage() {
               onChange={(e) => setYears(Math.max(1, Number(e.target.value || 1)))}
             />
           </div>
-          <input type="range" min={1} max={40} step={1} value={years} onChange={(e) => setYears(Number(e.target.value))} className="mt-2 w-full" />
-          <div className="text-xs text-gray-600 mt-1">{years} year(s)</div>
         </div>
+
+        <input type="range" min={1} max={40} step={1} value={years} onChange={(e) => setYears(Number(e.target.value))} className="w-full" />
+        <div className="text-xs text-gray-600">{years} year(s)</div>
 
         <div>
           <div className="flex items-center justify-between">
@@ -186,9 +239,10 @@ export default function ProjectionToolPage() {
               onChange={(e) => setGrowth(Number(e.target.value || 0))}
             />
           </div>
-          <input type="range" min={0} max={20} step={0.1} value={growth} onChange={(e) => setGrowth(Number(e.target.value))} className="mt-2 w-full" />
-          <div className="text-xs text-gray-600 mt-1">{growth}% p.a.</div>
         </div>
+
+        <input type="range" min={0} max={20} step={0.1} value={growth} onChange={(e) => setGrowth(Number(e.target.value))} className="w-full" />
+        <div className="text-xs text-gray-600">{growth}% p.a.</div>
 
         <div>
           <div className="flex items-center justify-between">
@@ -200,9 +254,10 @@ export default function ProjectionToolPage() {
               onChange={(e) => setEscalation(Number(e.target.value || 0))}
             />
           </div>
-          <input type="range" min={0} max={15} step={0.5} value={escalation} onChange={(e) => setEscalation(Number(e.target.value))} className="mt-2 w-full" />
-          <div className="text-xs text-gray-600 mt-1">{escalation}% / year</div>
         </div>
+
+        <input type="range" min={0} max={15} step={0.5} value={escalation} onChange={(e) => setEscalation(Number(e.target.value))} className="w-full" />
+        <div className="text-xs text-gray-600">{escalation}% / year</div>
       </section>
 
       <section className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -227,27 +282,40 @@ export default function ProjectionToolPage() {
         </section>
       )}
 
-      {series.length > 0 && (
-        <section className="mt-8">
-          <h2 className="text-xl font-semibold">Projection table</h2>
-          <table className="mt-2 w-full border-collapse border">
-            <thead>
-              <tr>
-                <th className="border px-4 py-2 text-left">Year</th>
-                <th className="border px-4 py-2 text-left">Estimated Value (R)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {series.map((row) => (
-                <tr key={row.x}>
-                  <td className="border px-4 py-2">{row.x}</td>
-                  <td className="border px-4 py-2">{Math.round(row.y).toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      )}
+      {/* Contact for investment quote */}
+      <section className="mt-10 rounded border bg-white p-4">
+        <h2 className="text-xl font-semibold">Request an investment quote</h2>
+        <p className="mt-1 text-gray-600">
+          Send your details and your latest projection to an authorised adviser.
+        </p>
+
+        <form onSubmit={sendQuoteRequest} className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium">Full name</label>
+            <input className="mt-1 w-full rounded border p-2" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">Email</label>
+            <input type="email" className="mt-1 w-full rounded border p-2" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">Mobile</label>
+            <input className="mt-1 w-full rounded border p-2" value={mobile} onChange={(e) => setMobile(e.target.value)} required />
+          </div>
+
+        <div className="sm:col-span-2">
+            <button
+              type="submit"
+              disabled={status === "sending"}
+              className="rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {status === "sending" ? "Sending…" : "Send request"}
+            </button>
+            {status === "ok" && <p className="text-sm text-green-700 mt-2">Thanks — we’ll be in touch shortly.</p>}
+            {status === "error" && <p className="text-sm text-red-700 mt-2">{error}</p>}
+          </div>
+        </form>
+      </section>
 
       <p className="mt-4 text-xs text-gray-500">
         Illustrative only. Assumes monthly contributions compounded monthly and annual escalation applied at the start of each year.
