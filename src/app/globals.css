@@ -1,52 +1,71 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Design tokens */
+:root{
+  --bg: #0b1020;            /* deep navy */
+  --panel: #0f1630;         /* slightly lighter */
+  --card: #121a3a;
+  --text: 240 9% 98%;       /* near-white */
+  --muted: 224 9% 72%;
+  --brand: 222 100% 61%;    /* blue */
+  --brand-2: 267 84% 68%;   /* purple */
+  --ring: 210 100% 65%;     /* focus ring */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  @apply text-white;
+  background:
+    radial-gradient(1000px 600px at 10% -10%, rgba(93,135,255,0.25), transparent 60%),
+    radial-gradient(900px 500px at 80% -10%, rgba(175,109,255,0.25), transparent 60%),
+    radial-gradient(1100px 800px at 50% 120%, rgba(93,135,255,0.20), transparent 60%),
+    var(--bg);
 }
 
-@media print {
-  header, nav, footer, .print\:hidden {
-    display: none !important;
-  }
-  body {
-    background: #fff !important;
-    color: #000 !important;
-  }
-  main {
-    padding: 0 !important;
-    margin: 0 !important;
-    max-width: 100% !important;
-  }
-  table, th, td {
-    border-color: #999 !important;
-  }
+* { outline: none; }
+:focus-visible {
+  box-shadow: 0 0 0 .25rem hsl(var(--ring)/.75);
+  border-radius: .5rem;
 }
-@media print {
-  header, nav, footer, .print\:hidden {
-    display: none !important;
-  }
-  body { background: #fff !important; color: #000 !important; }
-  main { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
-  table, th, td { border-color: #999 !important; }
+
+/* Panels & cards */
+.panel {
+  @apply rounded-2xl border border-white/10 bg-[color:var(--panel)]/80 backdrop-blur-md;
 }
+.card {
+  @apply rounded-2xl border border-white/10 bg-[color:var(--card)]/80 hover:bg-[color:var(--card)]/90 transition;
+}
+
+/* Buttons */
+.btn {
+  @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition;
+}
+.btn-brand {
+  background: linear-gradient(135deg, hsl(var(--brand)) 0%, hsl(var(--brand-2)) 100%);
+  @apply text-white shadow-md hover:shadow-lg;
+}
+.btn-ghost {
+  @apply bg-white/5 hover:bg-white/10;
+}
+
+/* Typography helpers */
+.text-muted { color: hsl(var(--muted)); }
+.text-gradient {
+  background: linear-gradient(135deg, hsl(var(--brand)), hsl(var(--brand-2)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Container */
+.container {
+  @apply mx-auto max-w-6xl px-4;
+}
+
+/* Simple link underline */
+a.hoverline { @apply hover:underline underline-offset-4; }
